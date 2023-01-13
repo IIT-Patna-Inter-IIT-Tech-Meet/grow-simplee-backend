@@ -11,11 +11,13 @@
   ```env
   PORT=5000
   CLIENT_URL=<enter the client url>
-  SESSION_SECRET=<super secret something>
   NODE_ENV='development' # would be subject to change.
 
   # Database settings
   DATABASE_URL='mysql://<url-encoded USERNAME>:<url-encoded PASSWORD>@<HOSTNAME>:<PORT>/<DATABASE>'
+
+  # JWT secret
+  TOKEN_SECRET=<super secret something>
   ```
 
 - Install the Redis server.
