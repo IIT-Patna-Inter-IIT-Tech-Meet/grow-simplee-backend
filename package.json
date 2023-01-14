@@ -5,6 +5,7 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "@prisma/client": "^4.8.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",

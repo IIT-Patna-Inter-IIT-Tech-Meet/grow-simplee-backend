@@ -24,76 +24,84 @@ enum BloodGroup {
 
 // Customer Model
 model Customer {
-    id            Int        @id @default(autoincrement())
-    createdAt     DateTime   @map("created_at") @default(now())
-    updatedAt     DateTime   @map("updated_at") @updateAt
-    name          String     @db.VarChar(100)
-    address       String
-    // TODO: geolocation 
-    latitude      String
-    longitude     String
-    phoneno       String?    @db.VarChar(20)
-    deliveries    Delivery[]
+  id         Int         @id @default(autoincrement())
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  name       String      @db.VarChar(100)
+  address    String
+  // TODO: geolocation 
+  latitude   String
+  longitude  String
+  phoneno    String?     @db.VarChar(20)
+  deliveries Delivery[]
+  Inventory  Inventory[]
+  Archive    Archive[]
+  Pickup     Pickup[]
 }
 
 model Product {
-    SKU String @db.VarChar(50) @id 
-    name String @db.VarChar(100)
-    desc String?
-    density Float @db.Float
+  SKU       String      @id @db.VarChar(50)
+  name      String      @db.VarChar(100)
+  desc      String?
+  density   Float       @db.Float
+  Inventory Inventory[]
+  Archive   Archive[]
 }
 
 model Rider {
-    id               String      @db.VarChar(50) @id
-    name             String      @db.VarChar(100)
-    // TOOD: geolocation ??? 
-    phoneno          String?     @db.VarChar(20)
-    onduty           Boolean     @db.Bit
-    email            String      @db.VarChar(50) @unique
-    password         String      @db.VarChar(50)
-    drivingLicense   String?     @map("driving_license")
-    bloodGroup       BloodGroup? @map("blood_group")
-    deliveries       Delivery[]
+  id             String      @id @db.VarChar(50)
+  name           String      @db.VarChar(100)
+  // TOOD: geolocation ??? 
+  phoneno        String?     @db.VarChar(20)
+  onduty         Boolean
+  email          String      @unique @db.VarChar(50)
+  password       String      @db.VarChar(50)
+  drivingLicense String?     @map("driving_license")
+  bloodGroup     BloodGroup? @map("blood_group")
+  deliveries     Delivery[]
+  Pickup         Pickup[]
 }
 
 model Inventory {
-    id               String      @db.VarChar(50)
-    customer         Customer    @relation(fields: [customerId], references: [id])
-    customerId       Int         @map("customer_id")
-    product          Product     @relation(fields: [productId], references: [SKU])
-    productId        String      @db.VarChar(50) @map("product_id")
-    AWB              String      @db.VarChar(50)
-    shipped          Boolean     @db.Bit
+  id         String     @id @db.VarChar(50)
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  customerId Int        @map("customer_id")
+  product    Product    @relation(fields: [productId], references: [SKU])
+  productId  String     @map("product_id") @db.VarChar(50)
+  AWB        String     @db.VarChar(50)
+  shipped    Boolean
+  Delivery   Delivery[]
+  Pickup     Pickup[]
 }
 
 model Delivery {
-    id               String      @db.VarChar(20) @id // TODO: think about this
-    rider            Rider       @relation(fields: [riderId], references: [id])
-    riderId          String      @db.VarChar(50) @map("rider_id")
-    customer         Customer    @relation(fields: [customerId], references: [id])
-    customerId       Int         @map("customer_id")
-    item             Inventory   @relation(fields: [itemId], references: [id])
-    itemId           String      @db.VarChar(50) @map("item_id")
+  id         String    @id @db.VarChar(20) // TODO: think about this
+  rider      Rider     @relation(fields: [riderId], references: [id])
+  riderId    String    @map("rider_id") @db.VarChar(50)
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  customerId Int       @map("customer_id")
+  item       Inventory @relation(fields: [itemId], references: [id])
+  itemId     String    @map("item_id") @db.VarChar(50)
+  Archive    Archive[]
 }
 
 model Archive {
-    id               String      @db.VarChar(50)
-    customer         Customer    @relation(fields: [customerId], references: [id])
-    customerId       Int         @map("customer_id")
-    product          Product     @relation(fields: [productId], references: [SKU])
-    productId        String      @db.VarChar(50) @map("product_id")
-    AWB              String      @db.VarChar(50)
-    delivery         Delivery    @relation(fields: [deliveryId], references: [id])
-    deliveryId       String      @db.VarChar(20) @map("delivery_id")
+  id         String   @id @db.VarChar(50)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int      @map("customer_id")
+  product    Product  @relation(fields: [productId], references: [SKU])
+  productId  String   @map("product_id") @db.VarChar(50)
+  AWB        String   @db.VarChar(50)
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+  deliveryId String   @map("delivery_id") @db.VarChar(20)
 }
 
 model Pickup {
-    id               String      @db.VarChar(20) @id // TODO: think about this
-    rider            Rider       @relation(fields: [riderId], references: [id])
-    riderId          String      @db.VarChar(50) @map("rider_id")
-    customer         Customer    @relation(fields: [customerId], references: [id])
-    customerId       Int         @map("customer_id")
-    item             Inventory   @relation(fields: [itemId], references: [id])
-    itemId           String      @db.VarChar(50) @map("item_id")
+  id         String    @id @db.VarChar(20) // TODO: think about this
+  rider      Rider     @relation(fields: [riderId], references: [id])
+  riderId    String    @map("rider_id") @db.VarChar(50)
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  customerId Int       @map("customer_id")
+  item       Inventory @relation(fields: [itemId], references: [id])
+  itemId     String    @map("item_id") @db.VarChar(50)
 }
-
