@@ -9,3 +9,91 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  OTHER
+}
+
+// Customer Model
+model Customer {
+    id            Int        @id @default(autoincrement())
+    createdAt     DateTime   @map("created_at") @default(now())
+    updatedAt     DateTime   @map("updated_at") @updateAt
+    name          String     @db.VarChar(100)
+    address       String
+    // TODO: geolocation 
+    latitude      String
+    longitude     String
+    phoneno       String?    @db.VarChar(20)
+    deliveries    Delivery[]
+}
+
+model Product {
+    SKU String @db.VarChar(50) @id 
+    name String @db.VarChar(100)
+    desc String?
+    density Float @db.Float
+}
+
+model Rider {
+    id               String      @db.VarChar(50) @id
+    name             String      @db.VarChar(100)
+    // TOOD: geolocation ??? 
+    phoneno          String?     @db.VarChar(20)
+    onduty           Boolean     @db.Bit
+    email            String      @db.VarChar(50) @unique
+    password         String      @db.VarChar(50)
+    drivingLicense   String?     @map("driving_license")
+    bloodGroup       BloodGroup? @map("blood_group")
+    deliveries       Delivery[]
+}
+
+model Inventory {
+    id               String      @db.VarChar(50)
+    customer         Customer    @relation(fields: [customerId], references: [id])
+    customerId       Int         @map("customer_id")
+    product          Product     @relation(fields: [productId], references: [SKU])
+    productId        String      @db.VarChar(50) @map("product_id")
+    AWB              String      @db.VarChar(50)
+    shipped          Boolean     @db.Bit
+}
+
+model Delivery {
+    id               String      @db.VarChar(20) @id // TODO: think about this
+    rider            Rider       @relation(fields: [riderId], references: [id])
+    riderId          String      @db.VarChar(50) @map("rider_id")
+    customer         Customer    @relation(fields: [customerId], references: [id])
+    customerId       Int         @map("customer_id")
+    item             Inventory   @relation(fields: [itemId], references: [id])
+    itemId           String      @db.VarChar(50) @map("item_id")
+}
+
+model Archive {
+    id               String      @db.VarChar(50)
+    customer         Customer    @relation(fields: [customerId], references: [id])
+    customerId       Int         @map("customer_id")
+    product          Product     @relation(fields: [productId], references: [SKU])
+    productId        String      @db.VarChar(50) @map("product_id")
+    AWB              String      @db.VarChar(50)
+    delivery         Delivery    @relation(fields: [deliveryId], references: [id])
+    deliveryId       String      @db.VarChar(20) @map("delivery_id")
+}
+
+model Pickup {
+    id               String      @db.VarChar(20) @id // TODO: think about this
+    rider            Rider       @relation(fields: [riderId], references: [id])
+    riderId          String      @db.VarChar(50) @map("rider_id")
+    customer         Customer    @relation(fields: [customerId], references: [id])
+    customerId       Int         @map("customer_id")
+    item             Inventory   @relation(fields: [itemId], references: [id])
+    itemId           String      @db.VarChar(50) @map("item_id")
+}
+

@@ -1,10 +1,11 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import { CLIENT_URL } from './util/secret';
+
 import auth_route from './routes/auth';
-import cookieParser from 'cookie-parser';
-// import package_route from './routes/packs';
+import package_route from './routes/packs';
 
 const app: Express = express();
 
@@ -19,7 +20,7 @@ app.use(cors({ origin: CLIENT_URL }));
 
 //----------ROUTES----------
 app.use('/auth', auth_route);
-// app.use('/package', package_route);
+app.use('/package', package_route);
 
 export default app;
 
