@@ -1,8 +1,11 @@
 import fs from 'fs';
 import { config } from 'dotenv';
 
+// Not the best way to check if environment exists
+// But meh!
 if (!fs.existsSync('.env')) {
-  console.error("[+] .env file doesn't seem to exist!");
+  console.error("[#] ERROR: .env file doesn't seem to exist!");
+  throw ".env file doesn't exist"
 }
 
 // Get Environment Variables
