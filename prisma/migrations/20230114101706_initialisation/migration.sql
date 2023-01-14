@@ -29,7 +29,7 @@ CREATE TABLE `Rider` (
     `phoneno` VARCHAR(20) NULL,
     `onduty` BOOLEAN NOT NULL,
     `email` VARCHAR(50) NOT NULL,
-    `password` VARCHAR(50) NOT NULL,
+    `password` VARCHAR(80) NOT NULL,
     `driving_license` VARCHAR(191) NULL,
     `blood_group` ENUM('A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE', 'OTHER') NULL,
 

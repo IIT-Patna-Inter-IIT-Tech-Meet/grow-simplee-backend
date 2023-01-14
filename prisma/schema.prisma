@@ -55,7 +55,7 @@ model Rider {
   phoneno        String?     @db.VarChar(20)
   onduty         Boolean
   email          String      @unique @db.VarChar(50)
-  password       String      @db.VarChar(50)
+  password       String      @db.VarChar(80)
   drivingLicense String?     @map("driving_license")
   bloodGroup     BloodGroup? @map("blood_group")
   deliveries     Delivery[]

@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
-import { PrismaClient, Rider, BloodGroup } from "@prisma/client";
+import { PrismaClient, Prisma, Rider } from "@prisma/client";
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
-import { TOKEN_SECRET, __prod__ } from "../util/secret";
+import { COOKIE_CONFIG, TOKEN_SECRET, __prod__ } from "../util/secret";
 
+const prisma = new PrismaClient();
 
 type SerializedRider = {
     name: Rider["name"],
@@ -20,8 +22,51 @@ const serializeRider = (rider: Rider): SerializedRider => {
     return { name, phoneno, onduty, email, drivingLicense, bloodGroup };
 }
 
-export const register = (_req: Request, _res: Response) => {
+export const register = async (req: Request, res: Response) => {
+    // Fields for register: Rider
+    const { body } = req;
+    if (!body || !body.name || !body.email || !body.password) {
+        return res.status(400).json({ success: false, message: "Malformed request" });
+    }
 
+    const { name, phoneno, email, drivingLicense, bloodGroup } = body;
+    
+    try {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(body.password, salt);
+
+        const rider = await prisma.rider.create({
+            data: {
+                id: uuidv4(),
+                name,
+                phoneno,
+                password: hashedPassword,
+                email,
+                drivingLicense,
+                bloodGroup,
+                onduty: false
+            }
+        });
+
+        const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
+
+        return res
+        .cookie("jwt", token, COOKIE_CONFIG)
+        .status(200)
+        .json({
+            success: true, 
+            message: "Registration Successful!", 
+            rider: serializeRider(rider)
+        });
+    }  catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            if (e.code.startsWith('P2'))
+                return res.status(402).json({ success: false, message: "Unauthorized" });
+            return res.status(500).json({ success: false, message: "Internal Server Error" })
+        }
+        return res.status(500).json({ success: false, message: "Internal Server Error" })
+    }
 };
 
 export const login = async (req: Request, res: Response) => {
@@ -30,12 +75,10 @@ export const login = async (req: Request, res: Response) => {
     if (!body || !body.email || !body.password) {
         return res.status(400).json({ success: false, message: "Malformed request" });
     }
+
     const { email, password } = req.body;
 
-
     try {
-        const prisma = new PrismaClient();
-
         const rider = await prisma.rider.findUnique({ where: { email } });
 
         if (!rider) { 
@@ -50,14 +93,14 @@ export const login = async (req: Request, res: Response) => {
 
         const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
 
-
         return res
-        .cookie("jwt", token, {
-            httpOnly: true,
-            secure: __prod__,
-        })
+        .cookie("jwt", token, COOKIE_CONFIG)
         .status(200)
-        .json({ success: true, message: "Login Successful!", rider: serializeRider(rider) });
+        .json({
+            success: true, 
+            message: "Login Successful!", 
+            rider: serializeRider(rider)
+        });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         return res.status(500).json({ success: false, message: "Internal Server Error" })
