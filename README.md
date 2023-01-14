@@ -2,7 +2,7 @@
 
 ## Before Running (Prerequisites)
 
-- Install node_modules, by running the following command (Note: package manager used for this project is *yarn*)
+- Install `node_modules`, by running the following command (Note: package manager used for this project is *yarn*)
   ```sh
   yarn install
   ```
@@ -33,6 +33,13 @@
   - For Windows users, since there doesn't seem to be any support. You might wanna install WSL2. Refer [this](https://redis.io/docs/getting-started/installation/install-redis-on-windows/).
 
 - Install MySQL server and MySQL Workbench.
+
+- Create Database as per the URI set in the env
+
+- Apply migrations to database by running the following command:
+  ```bash
+  npx prisma migrate dev
+  ```
 
 ## How to run?
 
