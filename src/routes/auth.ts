@@ -1,13 +1,17 @@
 import { Router } from "express";
 import * as controller from "../controllers/auth";
+import { authorization } from "../middlewares/auth";
 
 const router = Router();
 
-router.post('/login', controller.login);
-router.post('/logout', controller.logout);
+// ------------PUBLIC ROUTE------------
 router.post('/register', controller.register);
-router.post('/forgot-password', controller.forgot_password);
-router.post('/reset-password', controller.reset_password);
+router.post('/login', controller.login);
+router.post('/forgot-password', controller.forgotPassword);
+router.post('/reset-password', controller.resetPassword);
+
+// ----------PROTECTED ROUTE-----------
+router.post('/logout', authorization, controller.logout);
 
 
 export default router ;
