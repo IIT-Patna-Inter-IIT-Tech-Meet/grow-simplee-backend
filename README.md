@@ -18,6 +18,10 @@
 
   # JWT secret
   TOKEN_SECRET=<super secret something>
+
+  # Mailing credentials
+  MAILING_EMAIL=<mailing email>
+  MAILING_PASSWORD=<mailing password>
   ```
 
 - Install the Redis server.

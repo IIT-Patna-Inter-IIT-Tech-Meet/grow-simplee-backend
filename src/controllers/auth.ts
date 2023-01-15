@@ -4,8 +4,9 @@ import { PrismaClient, Prisma, Rider } from "@prisma/client";
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
-import { COOKIE_CONFIG, TOKEN_SECRET, __prod__ } from "../util/secret";
+import { COOKIE_CONFIG, TOKEN_SECRET, __prod__ } from "../util/config";
 import { RiderAuthorisedRequest } from "../util/types";
+import { transporter } from "../util/mail";
 
 const prisma = new PrismaClient();
 
@@ -133,13 +134,55 @@ export const logout = (_: Request, res: Response) => {
         .json({ success: true, message: "Logged out successfully!" });
 };
 
+const DIGITS = "0123456789";
+const generateOTP = (length: number): string => {
+    let otp = '';
+    for (let i = 0; i < length; ++i) {
+        otp += DIGITS[Math.floor(Math.random() * 10)];
+    }
+    return otp;
+}
+
 // ----------FORGOT PASSWORD route----------
 // * route_type: public
 // * relative url: /auth/forgot-password
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200
-export const forgotPassword = (_req: Request, _res: Response) => {};
+export const forgotPassword = async (req: Request, res: Response) => {
+    const { body } = req;
+    
+    if (!body || !body.email) {
+        return res.status(400).json({ success: false, message: "Malformed body" });
+    }
+
+    const { email } = body;
+
+    try {
+        const OTP = generateOTP(6);
+        const mailOptions = {
+            from: "noreply@gsiitp.com",
+            to: email,
+            subject: "Request for resetting password.",
+            text: `OTP: ${OTP}`
+        };
+
+        await prisma.rider.update({
+            where: { email: email },
+            data: { otp: OTP, otpExpireTime: new Date(Date.now() + 20 * 60 * 1000) } // 20 minutes
+        });
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({ success: true, message: "Mail sent successfully!" });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
 
 
 // ----------RESET PASSWORD route----------
@@ -148,4 +191,55 @@ export const forgotPassword = (_req: Request, _res: Response) => {};
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200
-export const resetPassword = (_req: Request, _res: Response) => {};
+export const resetPassword = async (req: Request, res: Response) => {
+    const { body } = req;
+
+    if (!body || !body.email || !body.otp || !body.password) {
+        return res.status(400).json({ success: false, message: "Malformed body" });
+    }
+
+    const  { email, otp, password } = body;
+
+    try {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // WARNING: Can it really update many though?
+        // since one of the conditions of WHERE involves
+        // equality of `email`.
+        const rider = await prisma.rider.updateMany({
+            where: {
+                AND: [
+                    { email: { equals: email } },
+                    { otp: { equals: otp } },
+                    { otpExpireTime: { gt: new Date(Date.now()) } },
+                ],
+            },
+            data: {
+                password: hashedPassword,
+                otpExpireTime: new Date(Date.now() - 10 * 60 * 1000), // back date expiry
+            },
+        });
+
+        if (rider.count !== 1) {
+            return res.status(403).json({
+                success: false, 
+                message: "OTP entered is either wrong, or has expired"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Password set successfully!"
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            return res.status(403).json({
+                success: false, 
+                message: "OTP entered is either wrong, or has expired"
+            });
+        }
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};

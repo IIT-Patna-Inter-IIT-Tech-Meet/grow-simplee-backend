@@ -2,7 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-import { CLIENT_URL } from './util/secret';
+import { CLIENT_URL } from './util/config';
 
 import auth_route from './routes/auth';
 import package_route from './routes/packages';

@@ -2,7 +2,7 @@ import { NextFunction, Response, Request } from 'express'
 import jwt from 'jsonwebtoken';
 
 import { RiderAuthorisedRequest } from '../util/types';
-import { TOKEN_SECRET } from '../util/secret';
+import { TOKEN_SECRET } from '../util/config';
 
 export const authorization = (req: Request, res: Response, next: NextFunction) => {
     if (!req.cookies) return res
