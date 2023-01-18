@@ -1,6 +1,6 @@
-import app from './app';
+import app from "./app";
 
-import { __prod__, PORT, ENVIRONMENT } from './util/config';
+import { __prod__, PORT, ENVIRONMENT } from "./util/config";
 
 try {
     app.listen(PORT, () => {

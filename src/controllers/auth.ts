@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import { PrismaClient, Prisma, Rider } from "@prisma/client";
-import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+import * as bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
 import { COOKIE_CONFIG, TOKEN_SECRET, __prod__ } from "../util/config";
 import { RiderAuthorisedRequest } from "../util/types";
@@ -11,18 +11,18 @@ import { transporter } from "../util/mail";
 const prisma = new PrismaClient();
 
 type SerializedRider = {
-    name: Rider["name"],
-    phoneno: Rider["phoneno"],
-    onduty: Rider["onduty"],
-    email: Rider["email"],
-    drivingLicense: Rider["drivingLicense"],
-    bloodGroup: Rider["bloodGroup"],
+    name: Rider["name"];
+    phoneno: Rider["phoneno"];
+    onduty: Rider["onduty"];
+    email: Rider["email"];
+    drivingLicense: Rider["drivingLicense"];
+    bloodGroup: Rider["bloodGroup"];
 };
 
 const serializeRider = (rider: Rider): SerializedRider => {
     const { name, phoneno, onduty, email, drivingLicense, bloodGroup } = rider;
     return { name, phoneno, onduty, email, drivingLicense, bloodGroup };
-}
+};
 
 // ----------REGISTER route----------
 // * route_type: public
@@ -38,7 +38,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const { name, phoneno, email, drivingLicense, bloodGroup } = body;
-    
+
     try {
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(body.password, salt);
@@ -52,30 +52,30 @@ export const register = async (req: Request, res: Response) => {
                 email,
                 drivingLicense,
                 bloodGroup,
-                onduty: false
-            }
+                onduty: false,
+            },
         });
 
         const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
 
         return res
-        .cookie("jwt", token, COOKIE_CONFIG)
-        .status(200)
-        .json({
-            success: true, 
-            message: "Registration Successful!", 
-            rider: serializeRider(rider)
-        });
-    }  catch (e) {
+            .cookie("jwt", token, COOKIE_CONFIG)
+            .status(200)
+            .json({
+                success: true,
+                message: "Registration Successful!",
+                rider: serializeRider(rider),
+            });
+    } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         if (e instanceof Prisma.PrismaClientKnownRequestError) {
-            if (e.code.startsWith('P2'))
+            if (e.code.startsWith("P2"))
                 return res.status(401).json({ success: false, message: "Unauthorized" });
         }
         if (e instanceof Prisma.PrismaClientValidationError) {
-            return res.status(400).json({ success: false, message: "Malformed body" })
+            return res.status(400).json({ success: false, message: "Malformed body" });
         }
-        return res.status(500).json({ success: false, message: "Internal Server Error" })
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -97,7 +97,7 @@ export const login = async (req: Request, res: Response) => {
     try {
         const rider = await prisma.rider.findUnique({ where: { email } });
 
-        if (!rider) { 
+        if (!rider) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
@@ -110,16 +110,16 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
 
         return res
-        .cookie("jwt", token, COOKIE_CONFIG)
-        .status(200)
-        .json({
-            success: true, 
-            message: "Login Successful!", 
-            rider: serializeRider(rider)
-        });
+            .cookie("jwt", token, COOKIE_CONFIG)
+            .status(200)
+            .json({
+                success: true,
+                message: "Login Successful!",
+                rider: serializeRider(rider),
+            });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
-        return res.status(500).json({ success: false, message: "Internal Server Error" })
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -138,12 +138,12 @@ export const logout = (_: Request, res: Response) => {
 
 const DIGITS = "0123456789";
 const generateOTP = (length: number): string => {
-    let otp = '';
+    let otp = "";
     for (let i = 0; i < length; ++i) {
         otp += DIGITS[Math.floor(Math.random() * 10)];
     }
     return otp;
-}
+};
 
 // ----------FORGOT PASSWORD route----------
 // * route_type: public
@@ -153,7 +153,7 @@ const generateOTP = (length: number): string => {
 // * status_codes_returned: 200
 export const forgotPassword = async (req: Request, res: Response) => {
     const { body } = req;
-    
+
     if (!body || !body.email) {
         return res.status(400).json({ success: false, message: "Malformed body" });
     }
@@ -166,12 +166,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
             from: "noreply@gs.com",
             to: email,
             subject: "Request for resetting password.",
-            text: `OTP: ${OTP}`
+            text: `OTP: ${OTP}`,
         };
 
         await prisma.rider.update({
             where: { email: email },
-            data: { otp: OTP, otpExpireTime: new Date(Date.now() + 20 * 60 * 1000) } // 20 minutes
+            data: { otp: OTP, otpExpireTime: new Date(Date.now() + 20 * 60 * 1000) }, // 20 minutes
         });
 
         await transporter.sendMail(mailOptions);
@@ -186,7 +186,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 };
 
-
 // ----------RESET PASSWORD route----------
 // * route_type: public
 // * relative url: /auth/reset-password
@@ -200,7 +199,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, message: "Malformed body" });
     }
 
-    const  { email, otp, password } = body;
+    const { email, otp, password } = body;
 
     try {
         const salt = await bcrypt.genSalt();
@@ -225,21 +224,21 @@ export const resetPassword = async (req: Request, res: Response) => {
 
         if (rider.count !== 1) {
             return res.status(403).json({
-                success: false, 
-                message: "OTP entered is either wrong, or has expired"
+                success: false,
+                message: "OTP entered is either wrong, or has expired",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: "Password set successfully!"
+            message: "Password set successfully!",
         });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         if (e instanceof Prisma.PrismaClientKnownRequestError) {
             return res.status(403).json({
-                success: false, 
-                message: "OTP entered is either wrong, or has expired"
+                success: false,
+                message: "OTP entered is either wrong, or has expired",
             });
         }
         return res.status(500).json({ success: false, message: "Internal Server Error" });

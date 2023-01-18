@@ -7,8 +7,8 @@ export const add_package = (_req: Request, _res: Response) => {
 
 export const get_package = (_req: Request, _res: Response) => {
     // : TODO : API for serving data to admin panel with pagination
-}
+};
 
 export const get_package_with_filter = (_req: Request, _res: Response) => {
     // : TODO : API for serving data to admin panel with pagination and filter
-}
+};

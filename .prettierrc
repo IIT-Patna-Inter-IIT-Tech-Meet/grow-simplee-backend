@@ -1,5 +1,8 @@
 {
     "trailingComma": "es5",
+    "printWidth": 100,
+    "tabWidth": 4,
+    "endOfLine": "crlf",
     "overrides": [
         {
             "files": ["*.json"],
@@ -7,7 +10,5 @@
                 "tabWidth": 2
             }
         }
-    ],
-    "tabWidth": 4,
-    "endOfLine": "crlf"
+    ]
 }
