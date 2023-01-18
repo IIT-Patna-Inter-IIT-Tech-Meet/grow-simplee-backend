@@ -163,7 +163,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     try {
         const OTP = generateOTP(6);
         const mailOptions = {
-            from: "noreply@gsiitp.com",
+            from: "noreply@gs.com",
             to: email,
             subject: "Request for resetting password.",
             text: `OTP: ${OTP}`
