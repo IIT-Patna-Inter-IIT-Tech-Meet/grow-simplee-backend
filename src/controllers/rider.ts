@@ -1,87 +1,18 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { PrismaClient, Prisma, Rider } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 import { transporter } from "../util/mail";
 import { AUTH_PRIVILEDGE } from "../util/types";
+import { generateOTP, serializeRider } from "../util/auth";
 
 const prisma = new PrismaClient();
 
-type SerializedRider = {
-    name: Rider["name"];
-    phoneno: Rider["phoneno"];
-    onduty: Rider["onduty"];
-    email: Rider["email"];
-    drivingLicense: Rider["drivingLicense"];
-    bloodGroup: Rider["bloodGroup"];
-};
-
-const serializeRider = (rider: Rider): SerializedRider => {
-    const { name, phoneno, onduty, email, drivingLicense, bloodGroup } = rider;
-    return { name, phoneno, onduty, email, drivingLicense, bloodGroup };
-};
-
-// ----------REGISTER route----------
-// * route_type: private (admin-scoped)
-// * relative url: /auth/add-rider
-// * method: POST
-// * cookies: SETS 'jwt'
-// * status_codes_returned: 200, 400, 401, 500
-export const addRider = async (req: Request, res: Response) => {
-    // Fields for register: Rider
-    const { body } = req;
-    if (!body || !body.name || !body.email || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
-
-    const { name, phoneno, email, drivingLicense, bloodGroup } = body;
-
-    try {
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(body.password, salt);
-
-        const rider = await prisma.rider.create({
-            data: {
-                id: uuidv4(),
-                name,
-                phoneno,
-                password: hashedPassword,
-                email,
-                drivingLicense,
-                bloodGroup,
-                onduty: false,
-            },
-        });
-
-        const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEDGE.RIDER }, TOKEN_SECRET);
-
-        return res
-            .cookie("jwt", token, COOKIE_CONFIG)
-            .status(200)
-            .json({
-                success: true,
-                message: "Registration Successful!",
-                rider: serializeRider(rider),
-            });
-    } catch (e) {
-        console.error(`[#] ERROR: ${e}`);
-        if (e instanceof Prisma.PrismaClientKnownRequestError) {
-            if (e.code.startsWith("P2"))
-                return res.status(401).json({ success: false, message: "Unauthorized" });
-        }
-        if (e instanceof Prisma.PrismaClientValidationError) {
-            return res.status(400).json({ success: false, message: "Malformed body" });
-        }
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-};
-
 // ----------LOGIN route----------
 // * route_type: public
-// * relative url: /auth/login
+// * relative url: /rider/login
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200, 400, 401, 500
@@ -125,9 +56,9 @@ export const login = async (req: Request, res: Response) => {
 
 // ----------LOGOUT route----------
 // * route_type: private/authorized
-// * relative url: /auth/logout
+// * relative url: /rider/logout
 // * method: POST
-// * cookies: SETS 'jwt'
+// * cookies: UNSETS 'jwt'
 // * status_codes_returned: 200
 export const logout = (_: Request, res: Response) => {
     return res
@@ -136,20 +67,10 @@ export const logout = (_: Request, res: Response) => {
         .json({ success: true, message: "Logged out successfully!" });
 };
 
-const DIGITS = "0123456789";
-const generateOTP = (length: number): string => {
-    let otp = "";
-    for (let i = 0; i < length; ++i) {
-        otp += DIGITS[Math.floor(Math.random() * 10)];
-    }
-    return otp;
-};
-
 // ----------FORGOT PASSWORD route----------
 // * route_type: public
-// * relative url: /auth/forgot-password
+// * relative url: /rider/forgot-password
 // * method: POST
-// * cookies: SETS 'jwt'
 // * status_codes_returned: 200
 export const forgotPassword = async (req: Request, res: Response) => {
     const { body } = req;
@@ -188,7 +109,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 // ----------RESET PASSWORD route----------
 // * route_type: public
-// * relative url: /auth/reset-password
+// * relative url: /rider/reset-password
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200

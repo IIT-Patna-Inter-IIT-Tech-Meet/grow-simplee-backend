@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as controller from "../controllers/auth";
+import * as controller from "../controllers/rider";
 import { authorization } from "../middlewares/auth";
 import { AUTH_PRIVILEDGE } from "../util/types";
 
@@ -11,9 +11,6 @@ router.post("/forgot-password", controller.forgotPassword);
 router.post("/reset-password", controller.resetPassword);
 
 // -------RIDER PROTECTED ROUTE--------
-router.post("/logout", authorization(AUTH_PRIVILEDGE.RIDER), controller.logout);
-
-// -------ADMIN PROTECTED ROUTE--------
-router.post("/add-rider", authorization(AUTH_PRIVILEDGE.ADMIN), controller.addRider)
+router.post("/logout", authorization(AUTH_PRIVILEDGE.ALL), controller.logout);
 
 export default router;

@@ -4,8 +4,9 @@ import cookieParser from "cookie-parser";
 
 import { CLIENT_URL } from "./util/config";
 
-import auth_route from "./routes/auth";
-import package_route from "./routes/packages";
+import riderRouter from "./routes/rider";
+import adminRouter from "./routes/admin";
+import packageRouter from "./routes/packages";
 
 const app: Express = express();
 
@@ -18,7 +19,8 @@ app.use(cookieParser());
 app.use(cors({ origin: CLIENT_URL }));
 
 //----------ROUTES----------
-app.use("/auth", auth_route);
-app.use("/package", package_route);
+app.use("/rider", riderRouter);
+app.use("/admin", adminRouter);
+app.use("/package", packageRouter);
 
 export default app;

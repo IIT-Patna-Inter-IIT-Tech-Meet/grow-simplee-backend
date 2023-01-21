@@ -8,5 +8,6 @@ CREATE TABLE `Admin` (
     `password` VARCHAR(100) NOT NULL,
     `super_admin` BOOLEAN NOT NULL DEFAULT false,
 
+    UNIQUE INDEX `Admin_email_key`(`email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
