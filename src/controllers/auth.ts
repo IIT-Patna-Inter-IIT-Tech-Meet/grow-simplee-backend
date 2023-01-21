@@ -4,9 +4,9 @@ import { PrismaClient, Prisma, Rider } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 
-import { COOKIE_CONFIG, TOKEN_SECRET, __prod__ } from "../util/config";
-import { RiderAuthorisedRequest } from "../util/types";
+import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 import { transporter } from "../util/mail";
+import { AUTH_PRIVILEDGE } from "../util/types";
 
 const prisma = new PrismaClient();
 
@@ -25,12 +25,12 @@ const serializeRider = (rider: Rider): SerializedRider => {
 };
 
 // ----------REGISTER route----------
-// * route_type: public
-// * relative url: /auth/register
+// * route_type: private (admin-scoped)
+// * relative url: /auth/add-rider
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200, 400, 401, 500
-export const register = async (req: Request, res: Response) => {
+export const addRider = async (req: Request, res: Response) => {
     // Fields for register: Rider
     const { body } = req;
     if (!body || !body.name || !body.email || !body.password) {
@@ -56,7 +56,7 @@ export const register = async (req: Request, res: Response) => {
             },
         });
 
-        const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
+        const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEDGE.RIDER }, TOKEN_SECRET);
 
         return res
             .cookie("jwt", token, COOKIE_CONFIG)
@@ -107,7 +107,7 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        const token = jwt.sign({ id: rider.id }, TOKEN_SECRET);
+        const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEDGE.RIDER }, TOKEN_SECRET);
 
         return res
             .cookie("jwt", token, COOKIE_CONFIG)

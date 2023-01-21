@@ -39,6 +39,16 @@ model Customer {
   Pickup     Pickup[]
 }
 
+model Admin {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  name       String   @db.VarChar(100)
+  email      String   @db.VarChar(100)
+  password   String   @db.VarChar(100)
+  superAdmin Boolean  @default(false) @map("super_admin")
+}
+
 model Product {
   SKU       String      @id @db.VarChar(50)
   name      String      @db.VarChar(100)

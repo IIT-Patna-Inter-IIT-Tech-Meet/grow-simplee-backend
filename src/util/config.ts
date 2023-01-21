@@ -11,7 +11,7 @@ if (!fs.existsSync(".env")) {
 // Get Environment Variables
 config();
 
-export const ENVIRONMENT = process.env.NODE_ENV as String;
+export const ENVIRONMENT = process.env.NODE_ENV;
 export const __prod__ = ENVIRONMENT === "production";
 export const PORT = Number(process.env.PORT) || 5000;
 export const CLIENT_URL = process.env.CLIENT_URL;
