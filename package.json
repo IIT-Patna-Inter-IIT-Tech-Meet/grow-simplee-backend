@@ -16,9 +16,12 @@
     "uuid": "^9.0.0"
   },
   "scripts": {
-    "build": "npx tsc",
+    "build": "yarn run tsc",
     "start": "node build/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q build/index.js\""
+    "dev": "concurrently \"yarn run tsc --watch\" \"nodemon -q build/index.js\"",
+    "fmt-check": "yarn run prettier --check .",
+    "fmt": "echo \"BEWARE! This allows rewriting all the codebase.\" && pause && yarn run prettier --write .",
+    "lint": "yarn run eslint ."
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
@@ -29,7 +32,11 @@
     "@types/node": "^18.11.18",
     "@types/nodemailer": "^6.4.7",
     "@types/uuid": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
     "concurrently": "^7.6.0",
+    "eslint": "^8.32.0",
+    "eslint-config-prettier": "^8.6.0",
     "nodemon": "^2.0.20",
     "prettier": "2.8.3",
     "prisma": "^4.8.1",
