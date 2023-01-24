@@ -4,7 +4,7 @@ import { __prod__, PORT, ENVIRONMENT } from "./util/config";
 
 try {
     app.listen(PORT, () => {
-        console.log(`[+] ⚡ Server listening on${PORT}`);
+        console.log(`[+] ⚡ Server listening on port: ${PORT}`);
         console.log(`[+] NODE_ENV=\`${ENVIRONMENT}\``);
     });
 } catch (e) {

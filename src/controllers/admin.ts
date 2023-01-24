@@ -151,7 +151,9 @@ export const addAdmin = async (req: Request, res: Response) => {
         console.error(`[#] ERROR: ${e}`);
         if (e instanceof Prisma.PrismaClientKnownRequestError) {
             if (e.code.startsWith("P2"))
-                return res.status(401).json({ success: false, message: "Unauthorized" });
+                return res
+                    .status(400)
+                    .json({ success: false, message: "Couldn't insert into database" });
         }
         if (e instanceof Prisma.PrismaClientValidationError) {
             return res.status(400).json({ success: false, message: "Malformed body" });

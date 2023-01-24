@@ -2,7 +2,7 @@
 
 ## Before Running (Prerequisites)
 
-- Install `node_modules`, by running the following command (Note: package manager used for this project is *yarn*)
+- Install `node_modules`, by running the following command (Note: package manager used for this project is **yarn**)
   ```sh
   yarn install
   ```
@@ -22,6 +22,10 @@
   # Mailing credentials
   MAILING_EMAIL=<mailing email>
   MAILING_PASSWORD=<mailing password>
+
+  # Super Admin credentials
+  SUPER_ADMIN_EMAIL=<super-admin email>
+  SUPER_ADMIN_PASSWORD=<super-admin password>
   ```
 
 - Install the Redis server.
@@ -42,8 +46,19 @@
 
 - Apply migrations to database by running the following command:
   ```bash
-  npx prisma migrate dev
+  yarn run prisma migrate dev
   ```
+
+## Before commiting:
+
+- Run the following command:
+  ```bash
+  $ yarn run fmt
+  $ yarn run fmt-check
+  $ yarn run lint
+  ```
+
+- Please ensure that above commands return with exit-code 0. (PS: warnings from `eslint` are acceptable)
 
 ## How to run?
 
@@ -62,12 +77,13 @@
 2. Populate the file `prisma/schema.prisma` with appropriate models.
 3. Run the following command:
    ```sh
-   npx prisma migrate dev --name <NAME>
+   yarn run prisma migrate dev --name <NAME>
    ```
    Here _NAME_ is the name of the migration you wish to give.
 4. The above command takes care of 2 things:
    - Makes appropriate changes to the database.
    - generates `@prisma/client` which has typing and functions for each model as ORM.
+5. Make sure that `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` exist as environment variables, they act as the credentials for logging in as the super admin.
 
 ## Conventions you might wanna abide by.
 
