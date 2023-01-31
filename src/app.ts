@@ -15,10 +15,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 // CORS
-app.use(cors({
-    origin: CLIENT_URL,
-    credentials: true
-}));
+app.use(
+    cors({
+        origin: CLIENT_URL,
+        credentials: true,
+    })
+);
 
 //----------ROUTES----------
 app.use("/rider", riderRouter);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as controller from "../controllers/admin";
 import { authorization } from "../middlewares/auth";
-import { AUTH_PRIVILEDGE } from "../util/types";
+import { AUTH_PRIVILEGE } from "../util/types";
 
 const router = Router();
 
@@ -9,10 +9,11 @@ const router = Router();
 router.post("/login", controller.login);
 
 // -------ADMIN PROTECTED ROUTE--------
-router.post("/logout", authorization(AUTH_PRIVILEDGE.ALL), controller.logout);
-router.post("/add-rider", authorization(AUTH_PRIVILEDGE.ADMIN), controller.addRider);
+router.get("/get-admin", authorization(AUTH_PRIVILEGE.ADMIN), controller.getAdmin);
+router.post("/logout", authorization(AUTH_PRIVILEGE.ADMIN), controller.logout);
+router.post("/add-rider", authorization(AUTH_PRIVILEGE.ADMIN), controller.addRider);
 
 // ----SUPER ADMIN PROTECTED ROUTE-----
-router.post("/add-admin", authorization(AUTH_PRIVILEDGE.SUPER_ADMIN), controller.addAdmin);
+router.post("/add-admin", authorization(AUTH_PRIVILEGE.SUPER_ADMIN), controller.addAdmin);
 
 export default router;

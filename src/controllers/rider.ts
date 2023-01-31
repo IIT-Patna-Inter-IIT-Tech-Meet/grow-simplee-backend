@@ -5,7 +5,7 @@ import * as bcrypt from "bcrypt";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 import { transporter } from "../util/mail";
-import { AUTH_PRIVILEDGE } from "../util/types";
+import { AUTH_PRIVILEGE, RiderAuthorizedRequest } from "../util/types";
 import { generateOTP, serializeRider } from "../util/auth";
 
 const prisma = new PrismaClient();
@@ -38,7 +38,9 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEDGE.RIDER }, TOKEN_SECRET);
+        const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEGE.RIDER }, TOKEN_SECRET, {
+            expiresIn: '10d' // setting expiration time of the jwt
+        });
 
         return res
             .cookie("jwt", token, COOKIE_CONFIG)
@@ -164,4 +166,23 @@ export const resetPassword = async (req: Request, res: Response) => {
         }
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+};
+
+
+// ----------GET-RIDER route----------
+// * route_type: private/authorized
+// * relative url: /rider/get-rider
+// * method: GET
+// * status_codes_returned: 200
+export const getRider = async (_req: Request, res: Response) => {
+    const req = _req as RiderAuthorizedRequest
+    const rider = await prisma.rider.findUnique({
+        where: { id: req.riderId },
+    });
+
+    if (!rider) {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    res.status(200).json({ success: true, message: "Valid Rider", rider: serializeRider(rider) });
 };

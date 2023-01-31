@@ -5,7 +5,7 @@ export type RiderAuthorizedRequest = Request & { riderId: string };
 export type AdminAuthorizedRequest = Request & { adminId: number };
 export type SuperAdminAuthorizedRequest = AdminAuthorizedRequest;
 
-export enum AUTH_PRIVILEDGE {
+export enum AUTH_PRIVILEGE {
     SUPER_ADMIN,
     ADMIN,
     RIDER,

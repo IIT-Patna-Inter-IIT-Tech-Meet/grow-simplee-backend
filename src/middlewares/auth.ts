@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 import {
     AdminAuthorizedRequest,
-    AUTH_PRIVILEDGE,
+    AUTH_PRIVILEGE,
     RiderAuthorizedRequest,
     SuperAdminAuthorizedRequest,
 } from "../util/types";
@@ -21,7 +21,7 @@ export const authorizationRider = (req: Request, res: Response, next: NextFuncti
         if (typeof data === "string" || data instanceof String)
             return res.status(403).json({ success: false, message: "Forbidden" });
 
-        if (data.role !== AUTH_PRIVILEDGE.RIDER)
+        if (data.role !== AUTH_PRIVILEGE.RIDER)
             return res.status(401).json({ success: false, message: "Unauthorized" });
 
         (req as RiderAuthorizedRequest).riderId = data.id;
@@ -43,7 +43,7 @@ export const authorizationAdmin = (req: Request, res: Response, next: NextFuncti
         if (typeof data === "string" || data instanceof String)
             return res.status(403).json({ success: false, message: "Forbidden" });
 
-        if (data.role !== AUTH_PRIVILEDGE.ADMIN || data.role !== AUTH_PRIVILEDGE.SUPER_ADMIN)
+        if (data.role !== AUTH_PRIVILEGE.ADMIN && data.role !== AUTH_PRIVILEGE.SUPER_ADMIN)
             return res.status(401).json({ success: false, message: "Unauthorized" });
 
         (req as AdminAuthorizedRequest).adminId = data.id;
@@ -64,7 +64,7 @@ export const authorizationSuperAdmin = (req: Request, res: Response, next: NextF
         if (typeof data === "string" || data instanceof String)
             return res.status(403).json({ success: false, message: "Forbidden" });
 
-        if (data.role !== AUTH_PRIVILEDGE.SUPER_ADMIN)
+        if (data.role !== AUTH_PRIVILEGE.SUPER_ADMIN)
             return res.status(401).json({ success: false, message: "Unauthorized" });
 
         (req as SuperAdminAuthorizedRequest).adminId = data.id;
@@ -94,15 +94,15 @@ export const authorizationAll = (req: Request, res: Response, next: NextFunction
     }
 };
 
-export const authorization = (role: AUTH_PRIVILEDGE) => {
+export const authorization = (role: AUTH_PRIVILEGE) => {
     switch (role) {
-        case AUTH_PRIVILEDGE.SUPER_ADMIN:
+        case AUTH_PRIVILEGE.SUPER_ADMIN:
             return authorizationSuperAdmin;
-        case AUTH_PRIVILEDGE.ADMIN:
+        case AUTH_PRIVILEGE.ADMIN:
             return authorizationAdmin;
-        case AUTH_PRIVILEDGE.RIDER:
+        case AUTH_PRIVILEGE.RIDER:
             return authorizationRider;
-        case AUTH_PRIVILEDGE.ALL:
+        case AUTH_PRIVILEGE.ALL:
             return authorizationAll;
         default:
             throw "UNREACHABLE";

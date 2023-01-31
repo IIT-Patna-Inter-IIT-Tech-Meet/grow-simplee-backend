@@ -3,7 +3,7 @@ import * as bcrypt from "bcrypt";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { serializeAdmin } from "../util/auth";
-import { AUTH_PRIVILEDGE } from "../util/types";
+import { AdminAuthorizedRequest, AUTH_PRIVILEGE } from "../util/types";
 import jwt from "jsonwebtoken";
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 
@@ -40,9 +40,12 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.sign(
             {
                 id: admin.id,
-                role: admin.superAdmin ? AUTH_PRIVILEDGE.SUPER_ADMIN : AUTH_PRIVILEDGE.ADMIN,
+                role: admin.superAdmin ? AUTH_PRIVILEGE.SUPER_ADMIN : AUTH_PRIVILEGE.ADMIN,
             },
-            TOKEN_SECRET
+            TOKEN_SECRET,
+            {
+                expiresIn: '10d' // expires the jwt after a period of 10 days
+            }
         );
 
         return res
@@ -173,4 +176,23 @@ export const logout = (_: Request, res: Response) => {
         .clearCookie("jwt")
         .status(200)
         .json({ success: true, message: "Logged out successfully!" });
+};
+
+// ----------GET-ADMIN route----------
+// * route_type: private/authorized
+// * relative url: /admin/get-admin
+// * method: GET
+// * status_codes_returned: 200
+export const getAdmin = async (_req: Request, res: Response) => {
+    const req = _req as AdminAuthorizedRequest;
+
+    const admin = await prisma.admin.findUnique({
+        where: { id: req.adminId },
+    });
+
+    if (!admin) {
+        return res.status(401).json({ success: false, message: "Unidentified Id" });
+    }
+
+    res.status(200).json({ success: true, message: "Valid Admin", admin: serializeAdmin(admin) });
 };
