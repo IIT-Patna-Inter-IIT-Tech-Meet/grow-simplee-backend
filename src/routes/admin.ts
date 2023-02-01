@@ -13,6 +13,11 @@ router.get("/get-admin", authorization(AUTH_PRIVILEGE.ADMIN), controller.getAdmi
 router.post("/logout", authorization(AUTH_PRIVILEGE.ADMIN), controller.logout);
 router.post("/add-rider", authorization(AUTH_PRIVILEGE.ADMIN), controller.addRider);
 
+router.get("/get-all-riders", authorization(AUTH_PRIVILEGE.ADMIN), controller.getAllRiders);
+router.get("/get-rider", authorization(AUTH_PRIVILEGE.ADMIN), controller.getRider);
+// prettier-ignore
+router.post( "/get-riders/filter", authorization(AUTH_PRIVILEGE.ADMIN), controller.getRidersWithFilters);
+
 // ----SUPER ADMIN PROTECTED ROUTE-----
 router.post("/add-admin", authorization(AUTH_PRIVILEGE.SUPER_ADMIN), controller.addAdmin);
 

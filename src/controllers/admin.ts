@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import * as bcrypt from "bcrypt";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
-import { serializeAdmin } from "../util/auth";
+import { serializeAdmin, serializeRider } from "../util/auth";
 import { AdminAuthorizedRequest, AUTH_PRIVILEGE } from "../util/types";
 import jwt from "jsonwebtoken";
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
@@ -74,7 +74,7 @@ export const addRider = async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, message: "Malformed request" });
     }
 
-    const { name, phoneno, email, drivingLicense, bloodGroup } = body;
+    const { name, phoneno, email, drivingLicense, bloodGroup, vehicleId } = body;
 
     try {
         const salt = await bcrypt.genSalt();
@@ -89,6 +89,7 @@ export const addRider = async (req: Request, res: Response) => {
                 email,
                 drivingLicense,
                 bloodGroup,
+                vehicleId,
                 onduty: false,
             },
         });
@@ -195,4 +196,101 @@ export const getAdmin = async (_req: Request, res: Response) => {
     }
 
     res.status(200).json({ success: true, message: "Valid Admin", admin: serializeAdmin(admin) });
+};
+
+// --------------------------------
+// Rider queries
+// --------------------------------
+// model Rider {
+//   id             String      @id @db.VarChar(50)
+//   name           String      @db.VarChar(100)
+//   phoneno        String?     @db.VarChar(20)
+//   onduty         Boolean
+//   vehicleId      String?     @db.VarChar(20)
+//   email          String      @unique @db.VarChar(50)
+//   password       String      @db.VarChar(80)
+//   drivingLicense String?     @map("driving_license")
+//   bloodGroup     BloodGroup? @map("blood_group")
+// }
+
+export const getRider = async (req: Request, res: Response) => {
+    const { query } = req;
+    if (!query || !query.id || typeof query.id !== "string") {
+        return res.status(400).json({ success: false, message: "Malformed request" });
+    }
+
+    const rider = await prisma.rider.findUnique({
+        where: { id: query.id },
+    });
+
+    if (!rider) {
+        return res.status(400).json({ success: false, message: "Rider not found!" });
+    }
+
+    res.status(200).json({ success: true, message: "Rider found!", rider: serializeRider(rider) });
+};
+
+export const getAllRiders = async (_: Request, res: Response) => {
+    const riders = await prisma.rider.findMany({
+        select: {
+            id: true,
+            name: true,
+            phoneno: true,
+            vehicleId: true,
+            onduty: true,
+        },
+    });
+
+    return res
+        .status(200)
+        .json({ success: true, message: `Found ${riders.length} rider(s)`, riders });
+};
+
+export const getRidersWithFilters = async (req: Request, res: Response) => {
+    const { body } = req;
+    if (!body) {
+        return res.status(400).json({ success: false, message: "use /get-all-riders instead" });
+    }
+
+    if (body.id) {
+        return res.status(400).json({ success: false, message: "use /get-rider instead" });
+    }
+
+    const filterPayload = [];
+    const stringFields = ["name", "email", "phoneno", "vehicleId"];
+
+    /*
+     * name: string
+     * email: string
+     * phoneno: string
+     * vehicleId: string
+     * onduty: boolean
+     */
+
+    for (const field of stringFields) {
+        if (typeof body[field] === "string" || body[field] instanceof String) {
+            const value = body[field] as string;
+            filterPayload.push({ [field]: { startsWith: value } });
+        }
+    }
+
+    if (typeof body.onduty === "boolean") filterPayload.push({ onduty: body.onduty as boolean });
+
+    const riders = await prisma.rider.findMany({
+        where: { AND: filterPayload },
+        select: {
+            id: true,
+            name: true,
+            phoneno: true,
+            email: true,
+            onduty: true,
+            vehicleId: true,
+            bloodGroup: true,
+            drivingLicense: true,
+        },
+    });
+
+    return res
+        .status(200)
+        .json({ success: false, message: `Found ${riders.length} rider(s)`, riders });
 };

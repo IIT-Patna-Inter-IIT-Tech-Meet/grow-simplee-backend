@@ -14,7 +14,7 @@ export enum AUTH_PRIVILEGE {
 
 export type SerializedRider = Pick<
     Rider,
-    "name" | "email" | "phoneno" | "onduty" | "drivingLicense" | "bloodGroup"
+    "name" | "email" | "phoneno" | "onduty" | "drivingLicense" | "bloodGroup" | "vehicleId"
 > &
     Partial<Rider>;
 

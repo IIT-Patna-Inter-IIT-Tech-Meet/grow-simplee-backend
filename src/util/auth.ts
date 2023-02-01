@@ -11,8 +11,8 @@ export const generateOTP = (length: number): string => {
 };
 
 export const serializeRider = (rider: Rider): SerializedRider => {
-    const { name, phoneno, onduty, email, drivingLicense, bloodGroup } = rider;
-    return { name, phoneno, onduty, email, drivingLicense, bloodGroup };
+    const { name, phoneno, onduty, email, drivingLicense, bloodGroup, vehicleId } = rider;
+    return { name, phoneno, onduty, email, drivingLicense, bloodGroup, vehicleId };
 };
 
 export const serializeAdmin = (admin: Admin): SerializedAdmin => {
