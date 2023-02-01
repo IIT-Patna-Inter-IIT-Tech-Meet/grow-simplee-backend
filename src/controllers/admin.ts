@@ -44,7 +44,7 @@ export const login = async (req: Request, res: Response) => {
             },
             TOKEN_SECRET,
             {
-                expiresIn: '10d' // expires the jwt after a period of 10 days
+                expiresIn: "10d", // expires the jwt after a period of 10 days
             }
         );
 

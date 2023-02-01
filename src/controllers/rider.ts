@@ -39,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign({ id: rider.id, role: AUTH_PRIVILEGE.RIDER }, TOKEN_SECRET, {
-            expiresIn: '10d' // setting expiration time of the jwt
+            expiresIn: "10d", // setting expiration time of the jwt
         });
 
         return res
@@ -168,14 +168,13 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 };
 
-
 // ----------GET-RIDER route----------
 // * route_type: private/authorized
 // * relative url: /rider/get-rider
 // * method: GET
 // * status_codes_returned: 200
 export const getRider = async (_req: Request, res: Response) => {
-    const req = _req as RiderAuthorizedRequest
+    const req = _req as RiderAuthorizedRequest;
     const rider = await prisma.rider.findUnique({
         where: { id: req.riderId },
     });

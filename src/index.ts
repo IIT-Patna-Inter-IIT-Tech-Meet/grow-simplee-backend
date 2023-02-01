@@ -11,6 +11,6 @@ try {
     if (__prod__) {
         // TODO: catch all uncaught errors at production
     } else {
-        console.error(e);
+        console.error(`[#] Error: ${e}`);
     }
 }
