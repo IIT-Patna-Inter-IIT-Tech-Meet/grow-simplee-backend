@@ -1,9 +1,8 @@
-import { Client, Entity, Schema } from 'redis-om'
+import { Client, Entity, Schema } from "redis-om";
 
-import { REDIS_URL } from './config'
+import { REDIS_URL } from "./config";
 
-export const client = await new Client().open(REDIS_URL)
-
+export const client = await new Client().open(REDIS_URL);
 
 // -----------Machine Repository-----------
 interface Machine {
@@ -14,22 +13,21 @@ interface Machine {
     height: number;
 
     weight: number;
-};
+}
 
-class Machine extends Entity {};
+class Machine extends Entity {}
 
 const machineSchema = new Schema(Machine, {
-    isRecorded: { type: 'boolean' }, // Piyush has contributed
+    isRecorded: { type: "boolean" }, // Piyush has contributed
 
-    length: { type: 'number' },
-    breadth: { type: 'number' },
-    height: { type: 'number' },
+    length: { type: "number" },
+    breadth: { type: "number" },
+    height: { type: "number" },
 
-    weight: { type: 'number' },
-})
+    weight: { type: "number" },
+});
 
 export const machineRepository = client.fetchRepository(machineSchema);
-
 
 // -----------Machine Repository-----------
 interface RiderGeolocation {
@@ -37,15 +35,15 @@ interface RiderGeolocation {
 
     latitude: number;
     longitude: number;
-};
+}
 
-class RiderGeolocation extends Entity {};
+class RiderGeolocation extends Entity {}
 
 const riderSchema = new Schema(RiderGeolocation, {
-    dbId: { type: 'string' }, 
+    dbId: { type: "string" },
 
-    latitude: { type: 'number' },
-    longitude: { type: 'number' },
+    latitude: { type: "number" },
+    longitude: { type: "number" },
 });
 
 export const riderRepository = client.fetchRepository(riderSchema);

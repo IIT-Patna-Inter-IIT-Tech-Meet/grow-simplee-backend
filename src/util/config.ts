@@ -27,7 +27,7 @@ export const COOKIE_CONFIG = {
 export const MAILING_EMAIL = process.env.MAILING_EMAIL;
 export const MAILING_PASSWORD = process.env.MAILING_PASSWORD;
 
-export const REDIS_URL = process.env.REDIS_URL; 
+export const REDIS_URL = process.env.REDIS_URL;
 
 export const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 export const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
