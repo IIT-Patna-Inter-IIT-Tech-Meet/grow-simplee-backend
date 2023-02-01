@@ -1,6 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// -----------------------------------------------------------
+// |TODOOOO: Update the drawio version of the schema as well.|
+// -----------------------------------------------------------
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,19 +28,22 @@ enum BloodGroup {
 
 // Customer Model
 model Customer {
-  id         Int         @id @default(autoincrement())
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  name       String      @db.VarChar(100)
-  address    String
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name      String   @db.VarChar(100)
+  address   String
+  phoneno   String?  @db.VarChar(20)
+
   // TODO: geolocation 
-  latitude   String
-  longitude  String
-  phoneno    String?     @db.VarChar(20)
-  deliveries Delivery[]
-  Inventory  Inventory[]
-  Archive    Archive[]
-  Pickup     Pickup[]
+  latitude  String
+  longitude String
+
+  activeDeliveries Delivery[]
+  activePickups    Pickup[]
+
+  pastDeliveries ArchivedDelivery[]
+  pastPickups    ArchivedPickup[]
 }
 
 model Admin {
@@ -44,24 +51,28 @@ model Admin {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
   name       String   @db.VarChar(100)
-  email      String   @db.VarChar(100) @unique
+  email      String   @unique @db.VarChar(100)
   password   String   @db.VarChar(100)
   superAdmin Boolean  @default(false) @map("super_admin")
 }
 
 model Product {
-  SKU       String      @id @db.VarChar(50)
-  name      String      @db.VarChar(100)
-  desc      String?
-  density   Float       @db.Float
-  Inventory Inventory[]
-  Archive   Archive[]
+  SKU     String  @id @db.VarChar(50)
+  name    String  @db.VarChar(100)
+  desc    String?
+  density Float   @db.Float
+
+  activeDeliveries InventoryItem[]
+  activePickups    Pickup[]
+
+  pastDeliverables ArchivedItem[]
+  pastPickups      ArchivedPickup[]
 }
 
 model Rider {
   id             String      @id @db.VarChar(50)
   name           String      @db.VarChar(100)
-  // TOOD: geolocation ??? 
+  // TODO: geolocation, should on the redis DB rather than here
   phoneno        String?     @db.VarChar(20)
   onduty         Boolean
   email          String      @unique @db.VarChar(50)
@@ -70,50 +81,97 @@ model Rider {
   bloodGroup     BloodGroup? @map("blood_group")
   otp            String?     @db.VarChar(10)
   otpExpireTime  DateTime?   @map("otp_expire_time")
-  deliveries     Delivery[]
-  Pickup         Pickup[]
+
+  activeDeliveries Delivery[]
+  activePickups    Pickup[]
+
+  pastDeliveries ArchivedDelivery[]
+  pastPickups    ArchivedPickup[]
 }
 
-model Inventory {
-  id         String     @id @db.VarChar(50)
-  customer   Customer   @relation(fields: [customerId], references: [id])
-  customerId Int        @map("customer_id")
-  product    Product    @relation(fields: [productId], references: [SKU])
-  productId  String     @map("product_id") @db.VarChar(50)
-  AWB        String     @db.VarChar(50)
-  shipped    Boolean
-  Delivery   Delivery[]
-  Pickup     Pickup[]
-}
-
+// -----------Active Record Tables-----------
 model Delivery {
-  id         String    @id @db.VarChar(20) // TODO: think about this
-  rider      Rider     @relation(fields: [riderId], references: [id])
-  riderId    String    @map("rider_id") @db.VarChar(50)
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  customerId Int       @map("customer_id")
-  item       Inventory @relation(fields: [itemId], references: [id])
-  itemId     String    @map("item_id") @db.VarChar(50)
-  Archive    Archive[]
+  id String @id @db.VarChar(20) // TODO: think about this
+
+  AWB               String    @db.VarChar(50)
+  EDD               DateTime
+  deliveryTimestamp DateTime? @map("delivery_timestamp")
+
+  rider      Rider    @relation(fields: [riderId], references: [id])
+  riderId    String   @map("rider_id") @db.VarChar(50)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int      @map("customer_id")
+
+  items InventoryItem[]
 }
 
-model Archive {
-  id         String   @id @db.VarChar(50)
+model Pickup {
+  id String @id @db.VarChar(20) // TODO: think about this
+
+  AWB             String    @db.VarChar(50)
+  EDP             DateTime // Expected Date (and time) of Pickup
+  pickupTimestamp DateTime? @map("pickup_timestamp")
+
+  rider      Rider    @relation(fields: [riderId], references: [id])
+  riderId    String   @map("rider_id") @db.VarChar(50)
   customer   Customer @relation(fields: [customerId], references: [id])
   customerId Int      @map("customer_id")
   product    Product  @relation(fields: [productId], references: [SKU])
   productId  String   @map("product_id") @db.VarChar(50)
-  AWB        String   @db.VarChar(50)
-  delivery   Delivery @relation(fields: [deliveryId], references: [id])
-  deliveryId String   @map("delivery_id") @db.VarChar(20)
 }
 
-model Pickup {
-  id         String    @id @db.VarChar(20) // TODO: think about this
-  rider      Rider     @relation(fields: [riderId], references: [id])
-  riderId    String    @map("rider_id") @db.VarChar(50)
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  customerId Int       @map("customer_id")
-  item       Inventory @relation(fields: [itemId], references: [id])
-  itemId     String    @map("item_id") @db.VarChar(50)
+model InventoryItem {
+  id         String   @id @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  product    Product  @relation(fields: [productId], references: [SKU])
+  productId  String   @map("product_id") @db.VarChar(50)
+  shipped    Boolean
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+  deliveryId String   @map("delivery_id") @db.VarChar(20)
+
+  @@map("Inventory_Item")
+}
+
+// -----------Archive Tables-----------
+model ArchivedDelivery {
+  id                String   @id @db.VarChar(20) // TODO: think about this
+  EDD               DateTime // Expected Date (and time) of Delivery
+  AWB               String   @db.VarChar(50)
+  deliveryTimestamp DateTime @map("delivery_timestamp")
+
+  rider      Rider    @relation(fields: [riderId], references: [id])
+  riderId    String   @map("rider_id") @db.VarChar(50)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int      @map("customer_id")
+
+  items ArchivedItem[]
+
+  @@map("Archived_Delivery")
+}
+
+model ArchivedPickup {
+  id              String    @id @db.VarChar(20) // TODO: think about this
+  EDP             DateTime // Expected Date (and time) of Pickup
+  pickupTimestamp DateTime? @map("pickup_timestamp")
+  AWB             String    @db.VarChar(50)
+
+  rider      Rider    @relation(fields: [riderId], references: [id])
+  riderId    String   @map("rider_id") @db.VarChar(50)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int      @map("customer_id")
+  product    Product  @relation(fields: [productId], references: [SKU])
+  productId  String   @map("product_id") @db.VarChar(50)
+
+  @@map("Archived_Pickup")
+}
+
+model ArchivedItem {
+  id         String           @id @db.VarChar(50)
+  product    Product          @relation(fields: [productId], references: [SKU])
+  productId  String           @map("product_id") @db.VarChar(50)
+  delivery   ArchivedDelivery @relation(fields: [deliveryId], references: [id])
+  deliveryId String           @map("delivery_id") @db.VarChar(20)
+
+  @@map("Archived_Item")
 }
