@@ -18,6 +18,7 @@ export const PORT = Number(process.env.PORT) || 5000;
 export const CLIENT_URL = process.env.CLIENT_URL;
 export const TOKEN_SECRET = process.env.TOKEN_SECRET || "random_secret";
 
+// TODO: secure being true is hard to implement perhaps
 export const COOKIE_CONFIG = {
     httpOnly: true,
     secure: __prod__,
@@ -25,6 +26,8 @@ export const COOKIE_CONFIG = {
 
 export const MAILING_EMAIL = process.env.MAILING_EMAIL;
 export const MAILING_PASSWORD = process.env.MAILING_PASSWORD;
+
+export const REDIS_URL = process.env.REDIS_URL; 
 
 export const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 export const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;

@@ -2,6 +2,7 @@
   "name": "Grow_Simplee_backend",
   "version": "1.0.0",
   "main": "index.ts",
+  "type": "module",
   "author": "",
   "license": "",
   "dependencies": {
@@ -13,6 +14,7 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "nodemailer": "^6.9.0",
+    "redis-om": "^0.3.6",
     "uuid": "^9.0.0"
   },
   "prisma": {
@@ -20,8 +22,8 @@
   },
   "scripts": {
     "build": "yarn run tsc",
-    "start": "node build/index.js",
-    "dev": "concurrently \"yarn run tsc --watch\" \"nodemon -q build/index.js\"",
+    "start": "node --es-module-specifier-resolution=node build/index.js",
+    "dev": "concurrently \"yarn run tsc --watch\" \"nodemon -q --es-module-specifier-resolution=node build/index.js\"",
     "fmt-check": "yarn run prettier --check .",
     "fmt": "echo \"BEWARE! This allows rewriting all the codebase.\" && pause && yarn run prettier --write .",
     "lint": "yarn run eslint ."

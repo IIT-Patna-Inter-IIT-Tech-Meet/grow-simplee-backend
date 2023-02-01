@@ -26,6 +26,12 @@
   # Super Admin credentials
   SUPER_ADMIN_EMAIL=<super-admin email>
   SUPER_ADMIN_PASSWORD=<super-admin password>
+
+  # Redis DB URL
+  REDIS_URL=<redis db url>
+  
+  # Google maps API
+  GOOGLE_MAPS_API_KEY=<google-maps api key>
   ```
 
 - Install the Redis server.
