@@ -70,13 +70,16 @@ model Product {
 }
 
 model Rider {
-  id             String      @id @db.VarChar(50)
-  name           String      @db.VarChar(100)
+  id       String  @id @db.VarChar(50)
+  name     String  @db.VarChar(100)
   // TODO: geolocation, should on the redis DB rather than here
-  phoneno        String?     @db.VarChar(20)
-  onduty         Boolean
-  email          String      @unique @db.VarChar(50)
-  password       String      @db.VarChar(80)
+  phoneno  String? @db.VarChar(20)
+  onduty   Boolean
+  email    String  @unique @db.VarChar(50)
+  password String  @db.VarChar(80)
+
+  vehicleId String? @db.VarChar(20) @map("vehicle_id")
+
   drivingLicense String?     @map("driving_license")
   bloodGroup     BloodGroup? @map("blood_group")
   otp            String?     @db.VarChar(10)
