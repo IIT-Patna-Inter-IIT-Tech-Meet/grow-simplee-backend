@@ -29,6 +29,8 @@ const machineSchema = new Schema(Machine, {
 
 export const machineRepository = client.fetchRepository(machineSchema);
 
+await machineRepository.createIndex()
+
 // -----------Machine Repository-----------
 interface RiderGeolocation {
     dbId: string;
@@ -47,3 +49,5 @@ const riderSchema = new Schema(RiderGeolocation, {
 });
 
 export const riderRepository = client.fetchRepository(riderSchema);
+
+await riderRepository.createIndex()

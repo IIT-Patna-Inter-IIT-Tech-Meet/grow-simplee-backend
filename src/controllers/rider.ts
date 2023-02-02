@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
@@ -8,7 +8,7 @@ import { transporter } from "../util/mail";
 import { AUTH_PRIVILEGE, RiderAuthorizedRequest } from "../util/types";
 import { generateOTP, serializeRider } from "../util/auth";
 
-const prisma = new PrismaClient();
+import { prisma } from "../util/prisma";
 
 // ----------LOGIN route----------
 // * route_type: public

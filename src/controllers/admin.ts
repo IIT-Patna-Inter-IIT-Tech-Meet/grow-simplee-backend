@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import * as bcrypt from "bcrypt";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { serializeAdmin, serializeRider } from "../util/auth";
 import { AdminAuthorizedRequest, AUTH_PRIVILEGE } from "../util/types";
 import jwt from "jsonwebtoken";
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 
-const prisma = new PrismaClient();
+import { prisma } from "../util/prisma";
+
 
 // ----------LOGIN route----------
 // * route_type: public
