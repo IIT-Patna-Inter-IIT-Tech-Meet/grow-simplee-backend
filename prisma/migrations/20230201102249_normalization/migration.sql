@@ -1,10 +1,10 @@
 /*
   Warnings:
 
-  - You are about to drop the column `item_id` on the `delivery` table. All the data in the column will be lost.
-  - You are about to drop the column `item_id` on the `pickup` table. All the data in the column will be lost.
-  - You are about to drop the `archive` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `inventory` table. If the table is not empty, all the data it contains will be lost.
+  - You are about to drop the column `item_id` on the `Delivery` table. All the data in the column will be lost.
+  - You are about to drop the column `item_id` on the `Pickup` table. All the data in the column will be lost.
+  - You are about to drop the `Archive` table. If the table is not empty, all the data it contains will be lost.
+  - You are about to drop the `Inventory` table. If the table is not empty, all the data it contains will be lost.
   - Added the required column `AWB` to the `Delivery` table without a default value. This is not possible if the table is not empty.
   - Added the required column `EDD` to the `Delivery` table without a default value. This is not possible if the table is not empty.
   - Added the required column `AWB` to the `Pickup` table without a default value. This is not possible if the table is not empty.
@@ -13,44 +13,44 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `archive` DROP FOREIGN KEY `Archive_customer_id_fkey`;
+ALTER TABLE `Archive` DROP FOREIGN KEY `Archive_customer_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `archive` DROP FOREIGN KEY `Archive_delivery_id_fkey`;
+ALTER TABLE `Archive` DROP FOREIGN KEY `Archive_delivery_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `archive` DROP FOREIGN KEY `Archive_product_id_fkey`;
+ALTER TABLE `Archive` DROP FOREIGN KEY `Archive_product_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `delivery` DROP FOREIGN KEY `Delivery_item_id_fkey`;
+ALTER TABLE `Delivery` DROP FOREIGN KEY `Delivery_item_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `inventory` DROP FOREIGN KEY `Inventory_customer_id_fkey`;
+ALTER TABLE `Inventory` DROP FOREIGN KEY `Inventory_customer_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `inventory` DROP FOREIGN KEY `Inventory_product_id_fkey`;
+ALTER TABLE `Inventory` DROP FOREIGN KEY `Inventory_product_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `pickup` DROP FOREIGN KEY `Pickup_item_id_fkey`;
+ALTER TABLE `Pickup` DROP FOREIGN KEY `Pickup_item_id_fkey`;
 
 -- AlterTable
-ALTER TABLE `delivery` DROP COLUMN `item_id`,
+ALTER TABLE `Delivery` DROP COLUMN `item_id`,
     ADD COLUMN `AWB` VARCHAR(50) NOT NULL,
     ADD COLUMN `EDD` DATETIME(3) NOT NULL,
     ADD COLUMN `delivery_timestamp` DATETIME(3) NULL;
 
 -- AlterTable
-ALTER TABLE `pickup` DROP COLUMN `item_id`,
+ALTER TABLE `Pickup` DROP COLUMN `item_id`,
     ADD COLUMN `AWB` VARCHAR(50) NOT NULL,
     ADD COLUMN `EDP` DATETIME(3) NOT NULL,
     ADD COLUMN `pickup_timestamp` DATETIME(3) NULL,
     ADD COLUMN `product_id` VARCHAR(50) NOT NULL;
 
 -- DropTable
-DROP TABLE `archive`;
+DROP TABLE `Archive`;
 
 -- DropTable
-DROP TABLE `inventory`;
+DROP TABLE `Inventory`;
 
 -- CreateTable
 CREATE TABLE `Inventory_Item` (

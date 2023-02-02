@@ -60,7 +60,7 @@ model Product {
   SKU     String  @id @db.VarChar(50)
   name    String  @db.VarChar(100)
   desc    String?
-  density Float   @db.Float
+  density Float?   @db.Float
 
   activeDeliveries InventoryItem[]
   activePickups    Pickup[]
