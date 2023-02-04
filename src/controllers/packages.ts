@@ -1,37 +1,55 @@
 import { Request, Response } from "express";
 import { prisma } from "../util/prisma";
+import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
 
 export const addPackage = async (req: Request, res: Response) => {
     const { body } = req;
-    if (!body || !body.machineId || !body.SKU || !body.name) {
+    if (!body || !body.machineId || !body.SKU || !body.productName) {
         return res.status(400).json({ success: false, message: "Malformed request" });
     }
 
-    const { machineId, SKU, name, desc } = body;
+    const { machineId, SKU, productName, desc } = body;
 
     const machineRepositoryId = await redisClient.get(machineId);
     if (!machineRepositoryId) {
         return res.status(403).json({ success: false, message: "Invalid machine ID" });
     }
     const machine = await machineRepository.fetch(machineRepositoryId);
-    if (!machine) {
+    if (!machine || !machine.isRecorded) {
         return res.status(403).json({ success: false, message: "Machine has expired!" });
     }
+
+    const { length, breadth, height, weight } = machine;
 
     try {
         const product = await prisma.product.upsert({
             where: { SKU },
+            update: {},
             create: {
-                name,
-                density: 1.0;
+                SKU: SKU,
+                name: productName,
+                desc,
             },
-        })
+        });
+
+        const inventoryItem = await prisma.inventoryItem.create({
+            data: {
+                id: uuidv4(),
+                productId: product.SKU,
+                length,
+                breadth,
+                height,
+                weight,
+                shipped: false,
+            },
+        });
+
+        res.status(200).json({ success: true, message: "Added Package", package: inventoryItem });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
     }
-
 };
 
 export const getPackage = (_req: Request, _res: Response) => {
@@ -48,9 +66,9 @@ export const getDimensionRecords = async (_: Request, res: Response) => {
     return res.status(200).json({
         success: true,
         message: `Found ${machines.length} machine(s)`,
-        machines
+        machines,
     });
-}
+};
 
 export const recordDimensions = async (req: Request, res: Response) => {
     const { body } = req;

@@ -3,13 +3,14 @@ import { config } from "dotenv";
 
 // Not the best way to check if environment exists
 // But meh!
-if (!fs.existsSync(".env")) {
-    console.error("[#] ERROR: .env file doesn't seem to exist!");
-    throw ".env file doesn't exist";
+if (fs.existsSync(".env")) {
+    // console.error("[#] ERROR: .env file doesn't seem to exist!");
+    // throw ".env file doesn't exist";
+    console.log("[@] Found `.env` file, assuming Environment variables exist");
+    config();
 }
 
 // Get Environment Variables
-config();
 
 export const ENVIRONMENT = process.env.NODE_ENV;
 export const __prod__ = ENVIRONMENT === "production";

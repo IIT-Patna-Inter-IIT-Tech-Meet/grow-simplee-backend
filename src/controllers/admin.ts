@@ -9,7 +9,6 @@ import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
 
 import { prisma } from "../util/prisma";
 
-
 // ----------LOGIN route----------
 // * route_type: public
 // * relative url: /admin/login
@@ -28,6 +27,7 @@ export const login = async (req: Request, res: Response) => {
     try {
         const admin = await prisma.admin.findUnique({ where: { email: email } });
 
+        console.log(email, password, admin);
         if (!admin) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
