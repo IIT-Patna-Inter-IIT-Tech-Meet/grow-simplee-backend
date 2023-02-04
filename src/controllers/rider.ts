@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
@@ -16,13 +17,14 @@ import { prisma } from "../util/prisma";
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200, 400, 401, 500
+export const loginSchema = z.object({
+    body: z.object({
+        email: z.string().email(),
+        password: z.string(),
+    }),
+});
 export const login = async (req: Request, res: Response) => {
     // Fields for login: req.body.email and req.body.password
-    const { body } = req;
-    if (!body || !body.email || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
-
     const { email, password } = req.body;
 
     try {
@@ -74,14 +76,15 @@ export const logout = (_: Request, res: Response) => {
 // * relative url: /rider/forgot-password
 // * method: POST
 // * status_codes_returned: 200
+export const forgotPasswordSchema = z.object({
+    body: z.object({
+        email: z.string().email(),
+    }),
+});
 export const forgotPassword = async (req: Request, res: Response) => {
-    const { body } = req;
-
-    if (!body || !body.email) {
-        return res.status(400).json({ success: false, message: "Malformed body" });
-    }
-
-    const { email } = body;
+    const {
+        body: { email },
+    } = req;
 
     try {
         const OTP = generateOTP(6);
@@ -115,14 +118,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200
+export const resetPasswordSchema = z.object({
+    body: z.object({
+        email: z.string().email(),
+        otp: z.number(),
+        password: z.string(),
+    }),
+});
 export const resetPassword = async (req: Request, res: Response) => {
-    const { body } = req;
-
-    if (!body || !body.email || !body.otp || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed body" });
-    }
-
-    const { email, otp, password } = body;
+    const { email, otp, password } = req.body;
 
     try {
         const salt = await bcrypt.genSalt();

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as bcrypt from "bcrypt";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { serializeAdmin, serializeRider } from "../util/auth";
 import { AdminAuthorizedRequest, AUTH_PRIVILEGE } from "../util/types";
@@ -15,13 +16,14 @@ import { prisma } from "../util/prisma";
 // * method: POST
 // * cookies: SETS 'jwt'
 // * status_codes_returned: 200, 400, 401, 500
+export const loginSchema = z.object({
+    body: z.object({
+        email: z.string().email(),
+        password: z.string(),
+    }),
+});
 export const login = async (req: Request, res: Response) => {
     // Fields for login: req.body.email and req.body.password
-    const { body } = req;
-    if (!body || !body.email || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
-
     const { email, password } = req.body;
 
     try {
@@ -68,12 +70,16 @@ export const login = async (req: Request, res: Response) => {
 // * relative url: /admin/add-rider
 // * method: POST
 // * status_codes_returned: 200, 400, 401, 500
+export const addRiderSchema = z.object({
+    body: z.object({
+        name: z.string(),
+        email: z.string().email(),
+        password: z.string(),
+    }),
+});
 export const addRider = async (req: Request, res: Response) => {
     // Fields for register: Rider
     const { body } = req;
-    if (!body || !body.name || !body.email || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
 
     const { name, phoneno, email, drivingLicense, bloodGroup, vehicleId } = body;
 
@@ -117,6 +123,13 @@ export const addRider = async (req: Request, res: Response) => {
 // * relative url: /admin/add-admin
 // * method: POST
 // * status_codes_returned: 200, 400, 401, 500
+export const addAdminSchema = z.object({
+    body: z.object({
+        name: z.string(),
+        email: z.string().email(),
+        password: z.string(),
+    }),
+});
 export const addAdmin = async (req: Request, res: Response) => {
     // Fields for register: Admin
     // model Admin {
@@ -129,9 +142,6 @@ export const addAdmin = async (req: Request, res: Response) => {
     //   superAdmin Boolean
     // }
     const { body } = req;
-    if (!body || !body.name || !body.email || !body.password) {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
 
     const { name, email, password } = body;
 
@@ -214,11 +224,13 @@ export const getAdmin = async (_req: Request, res: Response) => {
 //   bloodGroup     BloodGroup? @map("blood_group")
 // }
 
-export const getRider = async (req: Request, res: Response) => {
-    const { query } = req;
-    if (!query || !query.id || typeof query.id !== "string") {
-        return res.status(400).json({ success: false, message: "Malformed request" });
-    }
+export const getRiderSchema = z.object({
+    query: z.object({
+        id: z.string(),
+    }),
+});
+export const getRider = async (_req: Request, res: Response) => {
+    const { query } = _req as unknown as z.infer<typeof getRiderSchema>;
 
     const rider = await prisma.rider.findUnique({
         where: { id: query.id },
@@ -293,5 +305,5 @@ export const getRidersWithFilters = async (req: Request, res: Response) => {
 
     return res
         .status(200)
-        .json({ success: false, message: `Found ${riders.length} rider(s)`, riders });
+        .json({ success: true, message: `Found ${riders.length} rider(s)`, riders });
 };
