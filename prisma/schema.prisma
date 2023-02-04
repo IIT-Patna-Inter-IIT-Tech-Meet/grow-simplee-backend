@@ -44,6 +44,8 @@ model Customer {
 
   pastDeliveries ArchivedDelivery[]
   pastPickups    ArchivedPickup[]
+
+  @@unique([name, address]) // Assumption: No 2 customers can have same name and address
 }
 
 model Admin {
@@ -94,14 +96,14 @@ model Rider {
 
 // -----------Active Record Tables-----------
 model Delivery {
-  id String @id @db.VarChar(20) // TODO: think about this
+  id String @id @db.VarChar(50) // TODO: think about this
 
   AWB               String    @db.VarChar(50)
   EDD               DateTime
   deliveryTimestamp DateTime? @map("delivery_timestamp")
 
-  rider      Rider    @relation(fields: [riderId], references: [id])
-  riderId    String   @map("rider_id") @db.VarChar(50)
+  rider      Rider?   @relation(fields: [riderId], references: [id])
+  riderId    String?  @map("rider_id") @db.VarChar(50)
   customer   Customer @relation(fields: [customerId], references: [id])
   customerId Int      @map("customer_id")
 
@@ -133,8 +135,8 @@ model InventoryItem {
 
   shipped Boolean
 
-  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
-  deliveryId String?   @map("delivery_id") @db.VarChar(20)
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+  deliveryId String   @map("delivery_id") @db.VarChar(20)
 
   length  Float @db.Float
   breadth Float @db.Float
