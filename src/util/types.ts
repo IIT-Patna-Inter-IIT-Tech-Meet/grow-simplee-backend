@@ -19,3 +19,21 @@ export type SerializedRider = Pick<
     Partial<Rider>;
 
 export type SerializedAdmin = Pick<Admin, "name" | "email" | "superAdmin"> & Partial<Admin>;
+
+export type PackageListAtom = {
+    shipped?: boolean;
+    id: string;
+    product: {
+        name: string;
+        SKU: string;
+    };
+    delivery: {
+        EDD: Date;
+        dateTimestamp?: Date;
+        AWB: string;
+        customer: {
+            name: string;
+            address: string;
+        };
+    } | null;
+};
