@@ -32,3 +32,5 @@ export const REDIS_URL = process.env.REDIS_URL;
 
 export const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 export const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
+
+export const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;

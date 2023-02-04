@@ -37,3 +37,8 @@ export type PackageListAtom = {
         };
     } | null;
 };
+
+export type LatLong = {
+    latitude: number;
+    longitude: number;
+}
