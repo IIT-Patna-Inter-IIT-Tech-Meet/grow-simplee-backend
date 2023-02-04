@@ -60,7 +60,7 @@ model Product {
   SKU     String  @id @db.VarChar(50)
   name    String  @db.VarChar(100)
   desc    String?
-  density Float?   @db.Float
+  density Float?  @db.Float
 
   activeDeliveries InventoryItem[]
   activePickups    Pickup[]
@@ -78,7 +78,7 @@ model Rider {
   email    String  @unique @db.VarChar(50)
   password String  @db.VarChar(80)
 
-  vehicleId String? @db.VarChar(20) @map("vehicle_id")
+  vehicleId String? @map("vehicle_id") @db.VarChar(20)
 
   drivingLicense String?     @map("driving_license")
   bloodGroup     BloodGroup? @map("blood_group")
@@ -124,14 +124,23 @@ model Pickup {
 }
 
 model InventoryItem {
-  id         String   @id @db.VarChar(50)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  product    Product  @relation(fields: [productId], references: [SKU])
-  productId  String   @map("product_id") @db.VarChar(50)
-  shipped    Boolean
-  delivery   Delivery @relation(fields: [deliveryId], references: [id])
-  deliveryId String   @map("delivery_id") @db.VarChar(20)
+  id        String   @id @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product   Product @relation(fields: [productId], references: [SKU])
+  productId String  @map("product_id") @db.VarChar(50)
+
+  shipped Boolean
+
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
+  deliveryId String?   @map("delivery_id") @db.VarChar(20)
+
+  length  Float @db.Float
+  breadth Float @db.Float
+  height  Float @db.Float
+
+  weight Float @db.Float
 
   @@map("Inventory_Item")
 }
@@ -175,6 +184,12 @@ model ArchivedItem {
   productId  String           @map("product_id") @db.VarChar(50)
   delivery   ArchivedDelivery @relation(fields: [deliveryId], references: [id])
   deliveryId String           @map("delivery_id") @db.VarChar(20)
+
+  length  Float @db.Float
+  breadth Float @db.Float
+  height  Float @db.Float
+
+  weight Float @db.Float
 
   @@map("Archived_Item")
 }
