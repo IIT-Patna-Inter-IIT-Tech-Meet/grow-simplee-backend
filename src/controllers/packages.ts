@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
 import { PackageListAtom } from "../util/types";
+import { geocodeAddress } from "../util/maps";
 
 export const addPackageSchema = z.object({
     body: z.object({
@@ -59,15 +60,17 @@ export const addPackage = async (_req: Request, res: Response) => {
             },
         });
 
-        // TODOOOO: Get longitude and latitude from address
+        // TODO: Verify
+        const latLng = await geocodeAddress(address);
+
         const customer = await prisma.customer.upsert({
             where: { name_address: { name: customerName, address: address } },
             update: {},
             create: {
                 name: customerName,
                 address: address,
-                latitude: "123",
-                longitude: "1244",
+                latitude: latLng.latitude.toString(),
+                longitude: latLng.longitude.toString(),
             },
         });
 
@@ -167,11 +170,10 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
 
     const { body } = await getPackagesWithFilterSchema.parseAsync(req);
 
-    console.log(body);
 
     try {
         let items: PackageListAtom[] = [];
-        if (typeof body.outForDelivery === "boolean") {
+        if (typeof body.outForDelivery === "boolean" || !body.delivered) {
             items = await prisma.inventoryItem.findMany({
                 skip: body.limit * (body.page - 1),
                 take: body.limit,
@@ -250,11 +252,9 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
             });
         }
 
-        console.log(items);
-
         return res
         .status(200)
-        .json({ success: true, message: `Found ${items.length} rider(s)`, packages: items });
+        .json({ success: true, message: `Found ${items.length} package(s)`, packages: items });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`)
 
