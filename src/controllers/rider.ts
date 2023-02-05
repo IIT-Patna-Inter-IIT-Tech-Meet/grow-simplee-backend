@@ -278,7 +278,7 @@ export const getPastDeliveries = async (_req: Request, res: Response) => {
 
     const {
         body: { start, end, limit, page },
-    } = req as unknown as z.infer<typeof getPastDeliveriesSchema>;
+    } = await getPastDeliveriesSchema.parseAsync(req);
 
     try {
         const deliveries = await prisma.archivedDelivery.findMany({

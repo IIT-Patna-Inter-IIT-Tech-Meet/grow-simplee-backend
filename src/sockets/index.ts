@@ -10,10 +10,12 @@ export const handleSocketConnection = (io: Server) => async (socket: Socket) => 
 
     switch (role) {
         case AUTH_PRIVILEGE.RIDER:
-            return handleRiderConnection(io, socket as RiderSocket);
+            handleRiderConnection(io, socket as RiderSocket);
+            break;
         case AUTH_PRIVILEGE.ADMIN:
         case AUTH_PRIVILEGE.SUPER_ADMIN:
-            return handleAdminConnection(io, socket as AdminSocket);
+            handleAdminConnection(io, socket as AdminSocket);
+            break;
         default:
             throw "UNREACHABLE";
     }

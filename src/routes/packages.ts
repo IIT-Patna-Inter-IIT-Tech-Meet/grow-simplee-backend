@@ -32,4 +32,6 @@ router.post(
     controller.getPackagesWithFilter
 );
 
+router.get("/route-packages", authorization(AUTH_PRIVILEGE.RIDER), controller.getRiderPackages);
+
 export default router;

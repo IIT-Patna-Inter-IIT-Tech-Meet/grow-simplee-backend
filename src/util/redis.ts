@@ -32,13 +32,13 @@ export const machineRepository = client.fetchRepository(machineSchema);
 await machineRepository.createIndex();
 
 // -----------Rider Repository-----------
-interface RiderGeolocation {
+export interface RiderGeolocation {
     id: string;
     socketId: string;
     point: Point;
 }
 
-class RiderGeolocation extends Entity {}
+export class RiderGeolocation extends Entity {}
 
 const riderSchema = new Schema(RiderGeolocation, {
     id: { type: "string" },

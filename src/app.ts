@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-import { CLIENT_URL } from "./config/config";
+import { CLIENT_URL, APP_URL } from "./config/config";
 
 import riderRouter from "./routes/rider";
 import adminRouter from "./routes/admin";
@@ -19,7 +19,7 @@ const httpServer = createServer(app);
 //----------SOCKET-----------
 const io = new Server(httpServer, {
     cors: {
-        origin: CLIENT_URL,
+        origin: [CLIENT_URL, APP_URL],
         credentials: true,
     },
     cookie: true,
@@ -35,7 +35,7 @@ app.use(cookieParser());
 // CORS
 app.use(
     cors({
-        origin: CLIENT_URL,
+        origin: [CLIENT_URL, APP_URL],
         credentials: true,
     })
 );
