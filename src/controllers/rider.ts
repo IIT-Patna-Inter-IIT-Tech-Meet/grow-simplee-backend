@@ -269,21 +269,17 @@ export const getPastDeliveriesSchema = z.object({
             .datetime()
             .default(new Date(Date.now() - 2 * 7 * 24 * 60 * 60 * 1000).toJSON()), // 2 weeks
         end: z.string().datetime().default(new Date(Date.now()).toJSON()),
-        page: z.number().gte(0).default(1),
-        limit: z.number().gte(0).lte(10).default(10),
     }),
 });
 export const getPastDeliveries = async (_req: Request, res: Response) => {
     const req = _req as RiderAuthorizedRequest;
 
     const {
-        body: { start, end, limit, page },
+        body: { start, end },
     } = await getPastDeliveriesSchema.parseAsync(req);
 
     try {
         const deliveries = await prisma.archivedDelivery.findMany({
-            skip: limit * (page - 1),
-            take: limit,
             where: {
                 AND: [{ riderId: req.riderId }, { deliveryTimestamp: { lte: end, gte: start } }],
             },
@@ -298,6 +294,7 @@ export const getPastDeliveries = async (_req: Request, res: Response) => {
                     },
                 },
             },
+            orderBy: { deliveryTimestamp: "desc" },
         });
 
         return res

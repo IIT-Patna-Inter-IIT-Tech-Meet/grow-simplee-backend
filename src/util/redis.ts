@@ -1,8 +1,11 @@
+import { createClient } from 'redis';
 import { Client, Entity, Point, Schema } from "redis-om";
 
 import { REDIS_URL } from "../config/config";
 
-export const client = await new Client().open(REDIS_URL);
+export const redis = createClient({ url: REDIS_URL });
+await redis.connect();
+export const client = await new Client().use(redis);
 
 // -----------Machine Repository-----------
 interface Machine {
@@ -49,3 +52,21 @@ const riderSchema = new Schema(RiderGeolocation, {
 export const riderRepository = client.fetchRepository(riderSchema);
 
 await riderRepository.createIndex();
+
+// --------------Routes Repository-----------
+// DANGER: JSON stringifying the point
+export interface Routes {
+    riderId: string;
+    points: string[];
+}
+
+export class Routes extends Entity {}
+
+const routesSchema = new Schema(Routes, {
+    riderId: { type: "string" },
+    points: { type: "string[]" },
+});
+
+export const routeRepository = client.fetchRepository(routesSchema);
+
+await routeRepository.createIndex();

@@ -339,7 +339,7 @@ export const getRiderPackages = async (_req: Request, res: Response) => {
                         name: true,
                         address: true,
                         latitude: true,
-                        longitude: true
+                        longitude: true,
                     },
                 },
             },

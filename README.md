@@ -11,6 +11,7 @@
   ```env
   PORT=5000
   CLIENT_URL=<enter the client url>
+  APP_URL=<enter the app client url>
   NODE_ENV='development' # would be subject to change.
 
   # Database settings
