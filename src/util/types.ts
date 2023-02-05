@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { Rider, Admin } from "@prisma/client";
+import { Socket } from "socket.io";
 
 export type RiderAuthorizedRequest = Request & { riderId: string };
 export type AdminAuthorizedRequest = Request & { adminId: number };
@@ -11,6 +12,10 @@ export enum AUTH_PRIVILEGE {
     RIDER,
     ALL,
 }
+
+export type UserSocket = Socket & { role: AUTH_PRIVILEGE };
+export type AdminSocket = Socket & { adminId: number };
+export type RiderSocket = Socket & { riderId: string };
 
 export type SerializedRider = Pick<
     Rider,
@@ -41,4 +46,4 @@ export type PackageListAtom = {
 export type LatLong = {
     latitude: number;
     longitude: number;
-}
+};

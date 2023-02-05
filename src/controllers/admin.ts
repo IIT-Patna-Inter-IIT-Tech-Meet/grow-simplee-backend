@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { serializeAdmin, serializeRider } from "../util/auth";
 import { AdminAuthorizedRequest, AUTH_PRIVILEGE } from "../util/types";
 import jwt from "jsonwebtoken";
-import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
+import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 
 import { prisma } from "../util/prisma";
 
@@ -29,7 +29,6 @@ export const login = async (req: Request, res: Response) => {
     try {
         const admin = await prisma.admin.findUnique({ where: { email: email } });
 
-        console.log(email, password, admin);
         if (!admin) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }

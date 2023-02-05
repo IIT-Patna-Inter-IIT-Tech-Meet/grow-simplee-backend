@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
-import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from "./util/config";
+import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from "./config/config";
 
 const prisma = new PrismaClient();
 

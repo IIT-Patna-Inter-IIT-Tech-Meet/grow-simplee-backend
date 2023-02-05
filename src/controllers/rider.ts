@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
-import { COOKIE_CONFIG, TOKEN_SECRET } from "../util/config";
+import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 import { transporter } from "../util/mail";
 import { AUTH_PRIVILEGE, RiderAuthorizedRequest } from "../util/types";
 import { generateOTP, serializeRider } from "../util/auth";

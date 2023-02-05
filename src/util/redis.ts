@@ -1,4 +1,4 @@
-import { Client, Entity, Schema } from "redis-om";
+import { Client, Entity, Point, Schema } from "redis-om";
 
 import { REDIS_URL } from "./config";
 
@@ -31,21 +31,19 @@ export const machineRepository = client.fetchRepository(machineSchema);
 
 await machineRepository.createIndex();
 
-// -----------Machine Repository-----------
+// -----------Rider Repository-----------
 interface RiderGeolocation {
-    dbId: string;
-
-    latitude: number;
-    longitude: number;
+    id: string;
+    socketId: string;
+    point: Point;
 }
 
 class RiderGeolocation extends Entity {}
 
 const riderSchema = new Schema(RiderGeolocation, {
-    dbId: { type: "string" },
-
-    latitude: { type: "number" },
-    longitude: { type: "number" },
+    id: { type: "string" },
+    socketId: { type: "string" },
+    point: { type: "point" },
 });
 
 export const riderRepository = client.fetchRepository(riderSchema);

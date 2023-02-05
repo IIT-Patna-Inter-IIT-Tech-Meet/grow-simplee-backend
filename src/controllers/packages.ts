@@ -170,7 +170,6 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
 
     const { body } = await getPackagesWithFilterSchema.parseAsync(req);
 
-
     try {
         let items: PackageListAtom[] = [];
         if (typeof body.outForDelivery === "boolean" || !body.delivered) {
@@ -253,14 +252,12 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
         }
 
         return res
-        .status(200)
-        .json({ success: true, message: `Found ${items.length} package(s)`, packages: items });
+            .status(200)
+            .json({ success: true, message: `Found ${items.length} package(s)`, packages: items });
     } catch (e) {
-        console.error(`[#] ERROR: ${e}`)
+        console.error(`[#] ERROR: ${e}`);
 
-        return res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" })
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
