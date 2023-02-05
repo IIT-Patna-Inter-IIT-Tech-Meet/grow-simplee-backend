@@ -23,7 +23,7 @@ export const TOKEN_SECRET = process.env.TOKEN_SECRET || "random_secret";
 // TODO: secure being true is hard to implement perhaps
 export const COOKIE_CONFIG = {
     httpOnly: true,
-    secure: __prod__
+    secure: __prod__,
 };
 
 export const MAILING_EMAIL = process.env.MAILING_EMAIL;

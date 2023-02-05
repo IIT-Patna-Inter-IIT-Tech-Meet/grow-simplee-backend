@@ -4,7 +4,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
-import { AdminAuthorizedRequest, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
+import { PackageListAtom, RiderAuthorizedRequest } from "../util/types";
 import { geocodeAddress } from "../util/maps";
 
 export const addPackageSchema = z.object({
@@ -358,11 +358,11 @@ export const getRoutePackages = async (_req: Request, res: Response) => {
 
 export const getRiderPackagesSchema = z.object({
     query: z.object({
-        riderId: z.string()
-    })
+        riderId: z.string(),
+    }),
 });
 export const getRiderPackages = async (req: Request, res: Response) => {
-    const { query } = req as unknown as z.infer<typeof getRiderPackagesSchema>
+    const { query } = req as unknown as z.infer<typeof getRiderPackagesSchema>;
 
     try {
         const deliveries = await prisma.delivery.findMany({

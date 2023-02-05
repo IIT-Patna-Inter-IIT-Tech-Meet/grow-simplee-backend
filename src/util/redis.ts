@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient } from "redis";
 import { Client, Entity, Point, Schema } from "redis-om";
 
 import { REDIS_URL } from "../config/config";

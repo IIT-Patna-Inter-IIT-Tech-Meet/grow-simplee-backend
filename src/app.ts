@@ -10,6 +10,7 @@ import riderRouter from "./routes/rider";
 import adminRouter from "./routes/admin";
 import packageRouter from "./routes/packages";
 import routingRouter from "./routes/routing";
+
 import { socketAuthorization } from "./middlewares/auth";
 import { handleSocketConnection } from "./sockets";
 
@@ -44,6 +45,6 @@ app.use(
 app.use("/rider", riderRouter);
 app.use("/admin", adminRouter);
 app.use("/package", packageRouter);
-app.use("/router", routingRouter);
+app.use("/route", routingRouter);
 
 export default httpServer;
