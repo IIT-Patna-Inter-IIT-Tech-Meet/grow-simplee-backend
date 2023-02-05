@@ -6,6 +6,8 @@ import { handleRiderConnection } from "./rider";
 export const handleSocketConnection = (io: Server) => async (socket: Socket) => {
     const role = (socket as UserSocket).role;
 
+    console.log(`[@] LOG: Socket Connected with -- socket.id: ${socket.id}, socket.role: ${role}`);
+
     switch (role) {
         case AUTH_PRIVILEGE.RIDER:
             return handleRiderConnection(io, socket as RiderSocket);
