@@ -4,7 +4,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
-import { PackageListAtom, RiderAuthorizedRequest } from "../util/types";
+import { AdminAuthorizedRequest, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
 import { geocodeAddress } from "../util/maps";
 
 export const addPackageSchema = z.object({
@@ -323,12 +323,50 @@ export const recordDimensions = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: "machine repository updated" });
 };
 
-export const getRiderPackages = async (_req: Request, res: Response) => {
+export const getRoutePackages = async (_req: Request, res: Response) => {
     const req = _req as RiderAuthorizedRequest;
 
     try {
         const deliveries = await prisma.delivery.findMany({
             where: { riderId: req.riderId },
+            select: {
+                id: true,
+                AWB: true,
+                EDD: true,
+                deliveryTimestamp: true,
+                customer: {
+                    select: {
+                        name: true,
+                        address: true,
+                        latitude: true,
+                        longitude: true,
+                    },
+                },
+            },
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Found ${deliveries.length} packages`,
+            packages: deliveries,
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+export const getRiderPackagesSchema = z.object({
+    query: z.object({
+        riderId: z.string()
+    })
+});
+export const getRiderPackages = async (req: Request, res: Response) => {
+    const { query } = req as unknown as z.infer<typeof getRiderPackagesSchema>
+
+    try {
+        const deliveries = await prisma.delivery.findMany({
+            where: { riderId: query.riderId },
             select: {
                 id: true,
                 AWB: true,
