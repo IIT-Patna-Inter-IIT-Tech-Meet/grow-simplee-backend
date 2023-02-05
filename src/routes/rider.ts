@@ -24,5 +24,11 @@ router.post(
     validate(controller.updateRiderSchema),
     controller.updateRider
 );
+router.post(
+    "/past-deliveries",
+    authorization(AUTH_PRIVILEGE.RIDER),
+    validate(controller.getPastDeliveriesSchema),
+    controller.getPastDeliveries
+);
 
 export default router;

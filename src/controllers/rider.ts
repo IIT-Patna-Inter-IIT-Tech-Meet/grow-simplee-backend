@@ -203,6 +203,11 @@ export const getRider = async (_req: Request, res: Response) => {
 // bloodGroup     BloodGroup? @map("blood_group")
 // otp            String?     @db.VarChar(10)
 // otpExpireTime  DateTime?   @map("otp_expire_time")
+// -------UPDATE-RIDER route----------
+// * route_type: private/authorized
+// * relative url: /rider/update
+// * method: POST
+// * status_codes_returned: 200
 export const updateRiderSchema = z.object({
     body: z.object({
         name: z.string().optional(),
@@ -249,5 +254,56 @@ export const updateRider = async (_req: Request, res: Response) => {
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+// -------DELIVERIES route----------
+// * route_type: private/authorized
+// * relative url: /rider/past-deliveries
+// * method: POST
+// * status_codes_returned: 200
+export const getPastDeliveriesSchema = z.object({
+    body: z.object({
+        start: z
+            .string()
+            .datetime()
+            .default(new Date(Date.now() - 2 * 7 * 24 * 60 * 60 * 1000).toJSON()), // 2 weeks
+        end: z.string().datetime().default(new Date(Date.now()).toJSON()),
+        page: z.number().gte(0).default(1),
+        limit: z.number().gte(0).lte(10).default(10),
+    }),
+});
+export const getPastDeliveries = async (_req: Request, res: Response) => {
+    const req = _req as RiderAuthorizedRequest;
+
+    const {
+        body: { start, end, limit, page },
+    } = req as unknown as z.infer<typeof getPastDeliveriesSchema>;
+
+    try {
+        const deliveries = await prisma.archivedDelivery.findMany({
+            skip: limit * (page - 1),
+            take: limit,
+            where: {
+                AND: [{ riderId: req.riderId }, { deliveryTimestamp: { lte: end, gte: start } }],
+            },
+            select: {
+                id: true,
+                AWB: true,
+                deliveryTimestamp: true,
+                customer: {
+                    select: {
+                        address: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+
+        return res
+            .status(200)
+            .json({ success: true, message: `Found ${deliveries.length} deliveries!`, deliveries });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
     }
 };

@@ -179,8 +179,7 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
                 where: {
                     AND: [
                         { shipped: body.outForDelivery },
-                        { delivery: { EDD: { lte: body.eddEnd } } },
-                        { delivery: { EDD: { gte: body.eddStart } } },
+                        { delivery: { EDD: { lte: body.eddEnd, gte: body.eddStart } } },
                     ],
                 },
                 select: {
