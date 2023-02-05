@@ -189,3 +189,65 @@ export const getRider = async (_req: Request, res: Response) => {
 
     res.status(200).json({ success: true, message: "Valid Rider", rider: serializeRider(rider) });
 };
+
+// id       String  @id @db.VarChar(50)
+// name     String  @db.VarChar(100)
+// phoneno  String? @db.VarChar(20)
+// onduty   Boolean
+// email    String  @unique @db.VarChar(50)
+// password String  @db.VarChar(80)
+
+// vehicleId String? @map("vehicle_id") @db.VarChar(20)
+
+// drivingLicense String?     @map("driving_license")
+// bloodGroup     BloodGroup? @map("blood_group")
+// otp            String?     @db.VarChar(10)
+// otpExpireTime  DateTime?   @map("otp_expire_time")
+export const updateRiderSchema = z.object({
+    body: z.object({
+        name: z.string().optional(),
+        phoneno: z.string().optional(),
+        password: z.string().optional(),
+        vehicleId: z.string().optional(),
+        drivingLicense: z.string().optional(),
+        onduty: z.boolean().optional(),
+    }),
+});
+export const updateRider = async (_req: Request, res: Response) => {
+    const req = _req as RiderAuthorizedRequest;
+
+    if (req.body.id || req.body.email) {
+        return res.status(403).json({ success: false, message: "Some field(s) cannot be updated" });
+    }
+
+    const {
+        body: { name, phoneno, password, vehicleId, drivingLicense, onduty },
+    } = req as unknown as z.infer<typeof updateRiderSchema>;
+
+    try {
+        let hashedPassword = password;
+        if (hashedPassword) {
+            const salt = await bcrypt.genSalt();
+            hashedPassword = await bcrypt.hash(hashedPassword, salt);
+        }
+
+        const rider = await prisma.rider.update({
+            where: { id: req.riderId },
+            data: {
+                name,
+                phoneno,
+                vehicleId,
+                drivingLicense,
+                onduty,
+                password: hashedPassword,
+            },
+        });
+
+        return res
+            .status(200)
+            .json({ success: true, message: "Updated 1 Rider!", rider: serializeRider(rider) });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};

@@ -18,5 +18,11 @@ router.post("/reset-password", validate(controller.resetPasswordSchema), control
 // -------RIDER PROTECTED ROUTE--------
 router.post("/logout", authorization(AUTH_PRIVILEGE.RIDER), controller.logout);
 router.get("/get-rider", authorization(AUTH_PRIVILEGE.RIDER), controller.getRider);
+router.post(
+    "/update",
+    authorization(AUTH_PRIVILEGE.RIDER),
+    validate(controller.updateRiderSchema),
+    controller.updateRider
+);
 
 export default router;
