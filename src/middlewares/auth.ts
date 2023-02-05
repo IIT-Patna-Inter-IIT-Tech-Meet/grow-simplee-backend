@@ -71,10 +71,7 @@ const parseCookies = (cookiesString: string | undefined) => {
     return cookies;
 };
 
-export const socketAuthorization = (
-    socket: Socket,
-    next: (err?: Error | undefined) => void
-) => {
+export const socketAuthorization = (socket: Socket, next: (err?: Error | undefined) => void) => {
     try {
         const cookies = parseCookies(socket.handshake.headers["cookie"]);
 
@@ -89,14 +86,14 @@ export const socketAuthorization = (
         (socket as UserSocket).role = data.role;
         switch (data.role) {
             case AUTH_PRIVILEGE.RIDER:
-                (socket as RiderSocket).riderId = data.id
+                (socket as RiderSocket).riderId = data.id;
                 break;
             case AUTH_PRIVILEGE.ADMIN:
             case AUTH_PRIVILEGE.SUPER_ADMIN:
-                (socket as AdminSocket).adminId = data.id
+                (socket as AdminSocket).adminId = data.id;
                 break;
             default:
-                throw "UNREACHABLE"
+                throw "UNREACHABLE";
         }
 
         next();

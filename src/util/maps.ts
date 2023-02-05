@@ -1,5 +1,5 @@
 import axios from "axios";
-import { GOOGLE_MAPS_API_KEY } from "./config";
+import { GOOGLE_MAPS_API_KEY } from "../config/config";
 
 import { LatLong } from "./types";
 

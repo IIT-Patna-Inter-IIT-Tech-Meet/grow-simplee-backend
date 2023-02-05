@@ -1,6 +1,6 @@
 import { Client, Entity, Point, Schema } from "redis-om";
 
-import { REDIS_URL } from "./config";
+import { REDIS_URL } from "../config/config";
 
 export const client = await new Client().open(REDIS_URL);
 
