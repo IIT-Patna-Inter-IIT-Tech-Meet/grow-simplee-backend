@@ -25,10 +25,16 @@ router.post(
     controller.updateRider
 );
 router.post(
-    "/past-deliveries",
+    "/past-packages",
     authorization(AUTH_PRIVILEGE.RIDER),
     validate(controller.getPastDeliveriesSchema),
-    controller.getPastDeliveries
+    controller.getPastPackages
+);
+router.put(
+    "/register-package",
+    authorization(AUTH_PRIVILEGE.RIDER),
+    validate(controller.registerPackageSchema),
+    controller.registerPackage
 );
 
 export default router;

@@ -26,8 +26,11 @@ router.get(
     validate(controller.getRiderSchema),
     controller.getRider
 );
-// prettier-ignore
-router.post( "/get-riders/filter", authorization(AUTH_PRIVILEGE.ADMIN), controller.getRidersWithFilters);
+router.post(
+    "/get-riders/filter",
+    authorization(AUTH_PRIVILEGE.ADMIN),
+    controller.getRidersWithFilters
+);
 
 // ----SUPER ADMIN PROTECTED ROUTE-----
 router.post(

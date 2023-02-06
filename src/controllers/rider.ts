@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Delivery, Pickup, Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 import { transporter } from "../util/mail";
-import { AUTH_PRIVILEGE, RiderAuthorizedRequest } from "../util/types";
+import { AUTH_PRIVILEGE, PackageDistAtom, RiderAuthorizedRequest } from "../util/types";
 import { generateOTP, serializeRider } from "../util/auth";
 
 import { prisma } from "../util/prisma";
@@ -257,9 +257,9 @@ export const updateRider = async (_req: Request, res: Response) => {
     }
 };
 
-// -------DELIVERIES route----------
+// -------PACKAGES route----------
 // * route_type: private/authorized
-// * relative url: /rider/past-deliveries
+// * relative url: /rider/past-packages
 // * method: POST
 // * status_codes_returned: 200
 export const getPastDeliveriesSchema = z.object({
@@ -271,13 +271,14 @@ export const getPastDeliveriesSchema = z.object({
         end: z.string().datetime().default(new Date(Date.now()).toJSON()),
     }),
 });
-export const getPastDeliveries = async (_req: Request, res: Response) => {
+export const getPastPackages = async (_req: Request, res: Response) => {
     const req = _req as RiderAuthorizedRequest;
 
     const {
         body: { start, end },
     } = await getPastDeliveriesSchema.parseAsync(req);
 
+    const items: PackageDistAtom[] = [];
     try {
         const deliveries = await prisma.archivedDelivery.findMany({
             where: {
@@ -291,16 +292,90 @@ export const getPastDeliveries = async (_req: Request, res: Response) => {
                     select: {
                         address: true,
                         name: true,
+                        latitude: true,
+                        longitude: true,
                     },
                 },
             },
             orderBy: { deliveryTimestamp: "desc" },
         });
 
+        items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
+
+        const pickups = await prisma.archivedPickup.findMany({
+            where: {
+                AND: [{ riderId: req.riderId }, { pickupTimestamp: { lte: end, gte: start } }],
+            },
+            select: {
+                id: true,
+                AWB: true,
+                pickupTimestamp: true,
+                customer: {
+                    select: {
+                        address: true,
+                        name: true,
+                        latitude: true,
+                        longitude: true,
+                    },
+                },
+            },
+            orderBy: { pickupTimestamp: "desc" },
+        });
+
+        items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
+
         return res
             .status(200)
-            .json({ success: true, message: `Found ${deliveries.length} deliveries!`, deliveries });
+            .json({ success: true, message: `Found ${items.length} packages!`, packages: items });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
+    }
+};
+
+// -------SUBMIT DELIVERY route----------
+// * route_type: private/authorized
+// * relative url: /rider/register-package
+// * method: POST
+// * status_codes_returned: 200
+export const registerPackageSchema = z.object({
+    body: z.object({
+        itemId: z.string(),
+        delivery: z.boolean(),
+    }),
+});
+export const registerPackage = async (_req: Request, res: Response) => {
+    const req = _req as RiderAuthorizedRequest;
+    const { body } = _req as unknown as z.infer<typeof registerPackageSchema>;
+
+    try {
+        let item: Pickup | Delivery | null = null;
+        if (body.delivery) {
+            item = await prisma.delivery.findUnique({ where: { id: body.itemId } });
+        } else {
+            item = await prisma.pickup.findUnique({ where: { id: body.itemId } });
+        }
+
+        if (!item || item.riderId !== req.riderId)
+            return res.status(404).json({ sucess: false, message: "Item not found!" });
+
+        if (body.delivery) {
+            item = await prisma.delivery.update({
+                where: { id: body.itemId },
+                data: { deliveryTimestamp: new Date(Date.now()) },
+            });
+        } else {
+            item = await prisma.pickup.update({
+                where: { id: body.itemId },
+                data: { pickupTimestamp: new Date(Date.now()) },
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `${body.delivery ? "Delivery" : "Pickup"} recorded!`,
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };

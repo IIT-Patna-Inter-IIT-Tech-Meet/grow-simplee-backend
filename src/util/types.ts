@@ -43,6 +43,36 @@ export type PackageListAtom = {
     } | null;
 };
 
+export type DeliveryAtom = {
+    id: string;
+    AWB: string;
+    EDD?: Date;
+    deliveryTimestamp: Date | null;
+    customer: {
+        name: string;
+        address: string;
+        latitude: string;
+        longitude: string;
+    };
+};
+
+export type PickupAtom = {
+    id: string;
+    AWB: string;
+    EDP?: Date;
+    pickupTimestamp: Date | null;
+    customer: {
+        address: string;
+        name: string;
+        latitude: string;
+        longitude: string;
+    };
+};
+
+export type PackageDistAtom = (PickupAtom | DeliveryAtom) & {
+    delivery: boolean;
+};
+
 export type LatLong = {
     latitude: number;
     longitude: number;
