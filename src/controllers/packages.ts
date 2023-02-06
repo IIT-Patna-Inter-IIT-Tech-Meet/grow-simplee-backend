@@ -72,7 +72,7 @@ export const addPackage = async (_req: Request, res: Response) => {
                 address,
                 phoneno,
                 latitude: latLng.latitude,
-                longitude: latLng.longitude
+                longitude: latLng.longitude,
             },
         });
 

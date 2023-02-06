@@ -335,15 +335,15 @@ export const formRoutes = async (_: Request, res: Response) => {
                             select: {
                                 latitude: true,
                                 longitude: true,
-                            }
+                            },
                         },
                         EDD: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
         const riderCount = await prisma.rider.count({
-            where: { onduty: true }
+            where: { onduty: true },
         });
         const routePackages = packages.map((p) => {
             return {
@@ -351,16 +351,16 @@ export const formRoutes = async (_: Request, res: Response) => {
                 latitude: p.delivery.customer.latitude,
                 longitude: p.delivery.customer.longitude,
                 edd: p.delivery.EDD,
-                volume: p.length * p.breadth * p.height
-            }
-        })
+                volume: p.length * p.breadth * p.height,
+            };
+        });
 
         // TODO: lotssss
         await generateRoutes(routePackages, riderCount);
 
-        return res.status(200).json({ success: true, message: "Done" })
+        return res.status(200).json({ success: true, message: "Done" });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
-        res.status(500).json({ success: false, message: "Internal Server Error"});
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
