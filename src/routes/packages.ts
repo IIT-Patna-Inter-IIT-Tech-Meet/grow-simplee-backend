@@ -12,6 +12,12 @@ router.post(
     validate(controller.addPackageSchema),
     controller.addPackage
 );
+router.post(
+    "/add-pickup",
+    authorization(AUTH_PRIVILEGE.ADMIN),
+    validate(controller.addPickupSchema),
+    controller.addPickup
+);
 // Will have to see about its authorization
 router.post(
     "/record-dimensions",

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
-import { PackageListAtom, RiderAuthorizedRequest } from "../util/types";
+import { PackageDistAtom, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
 import { geocodeAddress } from "../util/maps";
 
 export const addPackageSchema = z.object({
@@ -12,17 +12,18 @@ export const addPackageSchema = z.object({
         machineId: z.string().startsWith("machine:", { message: "Must start with `machine:`" }),
         SKU: z.string(),
         productName: z.string(),
+        desc: z.string().optional(),
         AWB: z.string(),
         EDD: z.string().datetime(),
         customerName: z.string(),
         address: z.string(),
-        desc: z.string().optional(),
+        phoneno: z.string().optional(),
     }),
 });
 export const addPackage = async (_req: Request, res: Response) => {
     const req = _req as unknown as z.infer<typeof addPackageSchema>;
     const {
-        body: { machineId, SKU, productName, desc, AWB, EDD, customerName, address },
+        body: { machineId, SKU, productName, desc, AWB, EDD, customerName, address, phoneno },
     } = req;
     // Requirements:
     // - machineId
@@ -68,7 +69,8 @@ export const addPackage = async (_req: Request, res: Response) => {
             update: {},
             create: {
                 name: customerName,
-                address: address,
+                address,
+                phoneno,
                 latitude: latLng.latitude.toString(),
                 longitude: latLng.longitude.toString(),
             },
@@ -103,6 +105,68 @@ export const addPackage = async (_req: Request, res: Response) => {
         console.assert(newId === machineRepositoryId);
 
         res.status(200).json({ success: true, message: "Added Package", package: inventoryItem });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+export const addPickupSchema = z.object({
+    body: z.object({
+        SKU: z.string(),
+        productName: z.string(),
+        desc: z.string().optional(),
+        AWB: z.string(),
+        EDP: z.string().datetime(),
+        customerName: z.string(),
+        address: z.string(),
+        phoneno: z.string().optional(),
+    }),
+});
+export const addPickup = async (req: Request, res: Response) => {
+    const {
+        body: { AWB, EDP, SKU, productName, desc, customerName, address, phoneno },
+    } = req as unknown as z.infer<typeof addPickupSchema>;
+    try {
+        // Cascading effect:
+        // - Product
+        // - Customer
+        // - Pickup
+        const product = await prisma.product.upsert({
+            where: { SKU },
+            update: {},
+            create: {
+                SKU,
+                name: productName,
+                desc,
+            },
+        });
+
+        const latLng = await geocodeAddress(address);
+
+        const customer = await prisma.customer.upsert({
+            where: { name_address: { name: customerName, address } },
+            update: {},
+            create: {
+                name: customerName,
+                address,
+                phoneno,
+                latitude: latLng.latitude.toString(),
+                longitude: latLng.longitude.toString(),
+            },
+        });
+
+        const pickup = await prisma.pickup.create({
+            data: {
+                id: uuidv4().substring(0, 20),
+                AWB,
+                EDP,
+                customerId: customer.id,
+                productId: product.SKU,
+            },
+        });
+
+        return res.status(200).json({ success: true, message: "Recorded 1 pickup!", pickup });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -323,32 +387,63 @@ export const recordDimensions = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: "machine repository updated" });
 };
 
+const getPickupAndDeliveries = async (riderId: string): Promise<PackageDistAtom[]> => {
+    const items: PackageDistAtom[] = [];
+    const deliveries = await prisma.delivery.findMany({
+        where: { riderId },
+        select: {
+            id: true,
+            AWB: true,
+            EDD: true,
+            deliveryTimestamp: true,
+            customer: {
+                select: {
+                    name: true,
+                    address: true,
+                    latitude: true,
+                    longitude: true,
+                },
+            },
+        },
+        orderBy: { EDD: "desc" },
+    });
+
+    items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
+
+    const pickups = await prisma.pickup.findMany({
+        where: { riderId },
+        select: {
+            id: true,
+            AWB: true,
+            EDP: true,
+            pickupTimestamp: true,
+            customer: {
+                select: {
+                    name: true,
+                    address: true,
+                    latitude: true,
+                    longitude: true,
+                },
+            },
+        },
+        orderBy: { EDP: "desc" },
+    });
+
+    items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
+
+    return items;
+};
+
 export const getRoutePackages = async (_req: Request, res: Response) => {
     const req = _req as RiderAuthorizedRequest;
 
     try {
-        const deliveries = await prisma.delivery.findMany({
-            where: { riderId: req.riderId },
-            select: {
-                id: true,
-                AWB: true,
-                EDD: true,
-                deliveryTimestamp: true,
-                customer: {
-                    select: {
-                        name: true,
-                        address: true,
-                        latitude: true,
-                        longitude: true,
-                    },
-                },
-            },
-        });
+        const packages = await getPickupAndDeliveries(req.riderId);
 
         res.status(200).json({
             success: true,
-            message: `Found ${deliveries.length} packages`,
-            packages: deliveries,
+            message: `Found ${packages.length} packages`,
+            packages: packages,
         });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
@@ -365,28 +460,12 @@ export const getRiderPackages = async (req: Request, res: Response) => {
     const { query } = req as unknown as z.infer<typeof getRiderPackagesSchema>;
 
     try {
-        const deliveries = await prisma.delivery.findMany({
-            where: { riderId: query.riderId },
-            select: {
-                id: true,
-                AWB: true,
-                EDD: true,
-                deliveryTimestamp: true,
-                customer: {
-                    select: {
-                        name: true,
-                        address: true,
-                        latitude: true,
-                        longitude: true,
-                    },
-                },
-            },
-        });
+        const packages = await getPickupAndDeliveries(query.riderId);
 
         res.status(200).json({
             success: true,
-            message: `Found ${deliveries.length} packages`,
-            packages: deliveries,
+            message: `Found ${packages.length} packages`,
+            packages: packages,
         });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);

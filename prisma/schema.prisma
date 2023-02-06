@@ -96,7 +96,7 @@ model Rider {
 
 // -----------Active Record Tables-----------
 model Delivery {
-  id String @id @db.VarChar(50) // TODO: think about this
+  id String @id @db.VarChar(20) // TODO: think about this
 
   AWB               String    @db.VarChar(50)
   EDD               DateTime
@@ -117,8 +117,8 @@ model Pickup {
   EDP             DateTime // Expected Date (and time) of Pickup
   pickupTimestamp DateTime? @map("pickup_timestamp")
 
-  rider      Rider    @relation(fields: [riderId], references: [id])
-  riderId    String   @map("rider_id") @db.VarChar(50)
+  rider      Rider?   @relation(fields: [riderId], references: [id])
+  riderId    String?  @map("rider_id") @db.VarChar(50)
   customer   Customer @relation(fields: [customerId], references: [id])
   customerId Int      @map("customer_id")
   product    Product  @relation(fields: [productId], references: [SKU])
