@@ -78,13 +78,17 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
 
 export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
     const matrices: Matrix = { distanceMatrix: [], timeMatrix: [] };
+    for (let j = 0; j < points.length; ++j)
+        matrices.distanceMatrix.push([]), matrices.timeMatrix.push([]);
+
     const BATCH_SIZE = 25;
     for (let i = 0; i < points.length; i += BATCH_SIZE) {
+        const diff = Math.min(BATCH_SIZE, points.length - i);
         const originString = getPointsLatLngString(points, i, i + BATCH_SIZE);
 
         const dRows: Array<Array<number>> = [];
         const tRows: Array<Array<number>> = [];
-        for (let j = 0; j < originString.length; ++j) dRows.push([]), tRows.push([]);
+        for (let j = 0; j < diff; ++j) dRows.push([]), tRows.push([]);
 
         for (let j = 0; j < points.length; j += BATCH_SIZE) {
             const destinationString = getPointsLatLngString(points, j, j + BATCH_SIZE);
@@ -93,12 +97,20 @@ export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
                 destinationString
             );
 
-            d.forEach((v, idx) => dRows[idx].concat(v));
-            t.forEach((v, idx) => tRows[idx].concat(v));
+            d.forEach((v, idx) => {
+                dRows[idx] = [...dRows[idx], ...v];
+            });
+            t.forEach((v, idx) => {
+                tRows[idx] = [...tRows[idx], ...v];
+            });
         }
 
-        dRows.forEach((row) => matrices.distanceMatrix.concat(row));
-        tRows.forEach((row) => matrices.timeMatrix.concat(row));
+        dRows.forEach((row, idx) => {
+            matrices.distanceMatrix[idx] = matrices.distanceMatrix[idx].concat(row);
+        });
+        tRows.forEach((row, idx) => {
+            matrices.timeMatrix[idx] = matrices.timeMatrix[idx].concat(row);
+        });
     }
     return matrices;
 };

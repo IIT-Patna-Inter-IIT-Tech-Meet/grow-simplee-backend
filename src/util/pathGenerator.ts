@@ -13,7 +13,7 @@ const VOLUME_CAPACITY_OF_VEHICLE = 1000;
 
 export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: number) => {
     // TODO: generate route by calling the executable
-    // const GENERATOR_PATH = "/home/app/generator";
+    // const GENERATOR_PATH = "generator";
     // if (!fs.existsSync(GENERATOR_PATH)) {
     //     console.error("[#] ERROR: Generator executable not found");
     //     throw "Generator executable not found";
@@ -29,16 +29,22 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     const { distanceMatrix, timeMatrix } = await getDistanceMatrix(
         packages.map(({ latitude, longitude }) => ({ latitude, longitude }))
     );
-    const eddPackages = packages.map(({ edd }) => Number(edd));
+    const eddPackages = packages.map(({ edd }) => Number(edd) - Date.now());
 
     const buffer = `${N} ${M}\n${wID}\n${cap}\n${distanceMatrix
-        .map((x) => x.join(" "))
-        .join("\n")}\n${timeMatrix.map((x) => x.join(" ")).join("\n")}\n${eddPackages.join(
-        " "
-    )}\n${vol.join(" ")}`;
+        .map((x) => x.map((r) => r.toString()).join(" "))
+        .join("\n")}\n${timeMatrix
+        .map((x) => x.map((r) => r.toString()).join(" "))
+        .join("\n")}\n${eddPackages.join(" ")}\n${vol.join(" ")}`;
 
     const INPUT_FILE = "input.txt";
     fs.writeFileSync(INPUT_FILE, buffer);
+
+    // Invoke executable to get routes
+    
+
+    // Get output
+
 };
 
 // export const tweakRoutesForPickup = () => {};
