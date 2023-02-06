@@ -41,7 +41,7 @@ export const handleRiderConnection = async (io: Server, socket: RiderSocket) => 
 
             await saveAndAssertRider(riderEntity, riderRepoId);
 
-            // Inform all admins who are connected about the
+            // Inform all admins who are connected about the rider movement
             io.to("admin").emit("rider:move", riderEntity);
         } catch (e) {
             console.error(`[#] ERROR: ${e}`);

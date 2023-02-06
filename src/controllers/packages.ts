@@ -4,7 +4,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
 import { client as redisClient, machineRepository } from "../util/redis";
-import { PackageDistAtom, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
+import { IORequest, PackageDistAtom, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
 import { geocodeAddress } from "../util/maps";
 
 export const addPackageSchema = z.object({
@@ -71,8 +71,8 @@ export const addPackage = async (_req: Request, res: Response) => {
                 name: customerName,
                 address,
                 phoneno,
-                latitude: latLng.latitude.toString(),
-                longitude: latLng.longitude.toString(),
+                latitude: latLng.latitude,
+                longitude: latLng.longitude
             },
         });
 
@@ -127,6 +127,8 @@ export const addPickup = async (req: Request, res: Response) => {
     const {
         body: { AWB, EDP, SKU, productName, desc, customerName, address, phoneno },
     } = req as unknown as z.infer<typeof addPickupSchema>;
+
+    const { io } = req as IORequest;
     try {
         // Cascading effect:
         // - Product
@@ -151,10 +153,12 @@ export const addPickup = async (req: Request, res: Response) => {
                 name: customerName,
                 address,
                 phoneno,
-                latitude: latLng.latitude.toString(),
-                longitude: latLng.longitude.toString(),
+                latitude: latLng.latitude,
+                longitude: latLng.longitude,
             },
         });
+
+        // TODOOOO: Call executable to get data of which rider to be assigned for pickup
 
         const pickup = await prisma.pickup.create({
             data: {

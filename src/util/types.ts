@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { Rider, Admin } from "@prisma/client";
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 
 export type RiderAuthorizedRequest = Request & { riderId: string };
 export type AdminAuthorizedRequest = Request & { adminId: number };
@@ -16,6 +16,8 @@ export enum AUTH_PRIVILEGE {
 export type UserSocket = Socket & { role: AUTH_PRIVILEGE };
 export type AdminSocket = Socket & { adminId: number };
 export type RiderSocket = Socket & { riderId: string };
+
+export type IORequest = Request & { io: Server };
 
 export type SerializedRider = Pick<
     Rider,
@@ -46,26 +48,26 @@ export type PackageListAtom = {
 export type DeliveryAtom = {
     id: string;
     AWB: string;
-    EDD?: Date;
+    EDD: Date;
     deliveryTimestamp: Date | null;
     customer: {
         name: string;
         address: string;
-        latitude: string;
-        longitude: string;
+        latitude: number;
+        longitude: number;
     };
 };
 
 export type PickupAtom = {
     id: string;
     AWB: string;
-    EDP?: Date;
+    EDP: Date;
     pickupTimestamp: Date | null;
     customer: {
         address: string;
         name: string;
-        latitude: string;
-        longitude: string;
+        latitude: number;
+        longitude: number;
     };
 };
 
@@ -76,4 +78,9 @@ export type PackageDistAtom = (PickupAtom | DeliveryAtom) & {
 export type LatLong = {
     latitude: number;
     longitude: number;
+};
+
+export type Matrix = {
+    distanceMatrix: Array<Array<number>>;
+    timeMatrix: Array<Array<number>>;
 };

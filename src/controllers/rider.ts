@@ -5,7 +5,7 @@ import { Delivery, Pickup, Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
-import { transporter } from "../util/mail";
+import { transporter } from "../config/mail";
 import { AUTH_PRIVILEGE, PackageDistAtom, RiderAuthorizedRequest } from "../util/types";
 import { generateOTP, serializeRider } from "../util/auth";
 
@@ -288,6 +288,7 @@ export const getPastPackages = async (_req: Request, res: Response) => {
                 id: true,
                 AWB: true,
                 deliveryTimestamp: true,
+                EDD: true,
                 customer: {
                     select: {
                         address: true,
@@ -309,6 +310,7 @@ export const getPastPackages = async (_req: Request, res: Response) => {
             select: {
                 id: true,
                 AWB: true,
+                EDP: true,
                 pickupTimestamp: true,
                 customer: {
                     select: {

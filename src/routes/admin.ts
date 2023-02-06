@@ -31,6 +31,7 @@ router.post(
     authorization(AUTH_PRIVILEGE.ADMIN),
     controller.getRidersWithFilters
 );
+router.get("/generate-routes", authorization(AUTH_PRIVILEGE.ADMIN), controller.formRoutes);
 
 // ----SUPER ADMIN PROTECTED ROUTE-----
 router.post(

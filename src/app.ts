@@ -13,6 +13,7 @@ import routingRouter from "./routes/routing";
 
 import { socketAuthorization } from "./middlewares/auth";
 import { handleSocketConnection } from "./sockets";
+import { populateRequestWithIO } from "./middlewares/io";
 
 const app: Express = express();
 const httpServer = createServer(app);
@@ -40,6 +41,8 @@ app.use(
         credentials: true,
     })
 );
+// Kinda sus
+app.use(populateRequestWithIO(io));
 
 //----------ROUTES----------
 app.use("/rider", riderRouter);

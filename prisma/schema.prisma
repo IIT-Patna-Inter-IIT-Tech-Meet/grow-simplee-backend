@@ -36,8 +36,8 @@ model Customer {
   phoneno   String?  @db.VarChar(20)
 
   // TODO: geolocation 
-  latitude  String
-  longitude String
+  latitude  Float @db.Float
+  longitude Float @db.Float
 
   activeDeliveries Delivery[]
   activePickups    Pickup[]

@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 
 import { prisma } from "../util/prisma";
+import { generateRoutes } from "../util/pathGenerator";
 
 // ----------LOGIN route----------
 // * route_type: public
@@ -305,4 +306,61 @@ export const getRidersWithFilters = async (req: Request, res: Response) => {
     return res
         .status(200)
         .json({ success: true, message: `Found ${riders.length} rider(s)`, riders });
+};
+
+// type ItemAtom = {
+//     latitude: number;
+//     longitude: number;
+//     id: string;
+//     edd: Date;
+//     volume: number;
+// };
+export const formRoutes = async (_: Request, res: Response) => {
+    // remove the deliveryTimestamp ones from inventoryItem first
+    try {
+        const packages = await prisma.inventoryItem.findMany({
+            where: {
+                delivery: {
+                    EDD: { lte: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+                }, // 1 day
+            },
+            select: {
+                id: true,
+                length: true,
+                breadth: true,
+                height: true,
+                delivery: {
+                    select: {
+                        customer: {
+                            select: {
+                                latitude: true,
+                                longitude: true,
+                            }
+                        },
+                        EDD: true,
+                    }
+                }
+            }
+        });
+        const riderCount = await prisma.rider.count({
+            where: { onduty: true }
+        });
+        const routePackages = packages.map((p) => {
+            return {
+                id: p.id,
+                latitude: p.delivery.customer.latitude,
+                longitude: p.delivery.customer.longitude,
+                edd: p.delivery.EDD,
+                volume: p.length * p.breadth * p.height
+            }
+        })
+
+        // TODO: lotssss
+        await generateRoutes(routePackages, riderCount);
+
+        return res.status(200).json({ success: true, message: "Done" })
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        res.status(500).json({ success: false, message: "Internal Server Error"});
+    }
 };
