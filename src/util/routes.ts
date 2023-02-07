@@ -13,7 +13,6 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
         console.assert(riders.length === routes.length);
 
         riders.forEach(async (rider, idx) => {
-            if (routes[idx].length <= 0) return;
             const route = routeRepository.createEntity({
                 riderId: rider.id,
                 points: routes[idx].map(({ latitude, longitude, id }) =>
