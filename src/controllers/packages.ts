@@ -392,7 +392,7 @@ export const recordDimensions = async (req: Request, res: Response) => {
 };
 
 const getPickupAndDeliveries = async (riderId: string): Promise<PackageDistAtom[]> => {
-    const items: PackageDistAtom[] = [];
+    let items: PackageDistAtom[] = [];
     const deliveries = await prisma.delivery.findMany({
         where: { riderId },
         select: {
@@ -412,7 +412,7 @@ const getPickupAndDeliveries = async (riderId: string): Promise<PackageDistAtom[
         orderBy: { EDD: "desc" },
     });
 
-    items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
+    items = items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
 
     const pickups = await prisma.pickup.findMany({
         where: { riderId },
@@ -433,7 +433,7 @@ const getPickupAndDeliveries = async (riderId: string): Promise<PackageDistAtom[
         orderBy: { EDP: "desc" },
     });
 
-    items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
+    items = items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
 
     return items;
 };

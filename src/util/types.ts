@@ -93,7 +93,7 @@ export type Matrix = {
 export type ItemAtom = {
     latitude: number;
     longitude: number;
-    id: string;
+    id: string; // inventory item
     edd: Date;
     volume: number;
 };

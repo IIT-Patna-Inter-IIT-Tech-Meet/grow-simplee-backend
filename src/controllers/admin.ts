@@ -10,7 +10,7 @@ import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 
 import { prisma } from "../util/prisma";
 import { generateRoutes } from "../util/pathGenerator";
-import { postRoutesToRedis } from "../util/redis";
+import { assignRoutesToRiders } from "../util/routes";
 
 // ----------LOGIN route----------
 // * route_type: public
@@ -249,6 +249,7 @@ export const getAllRiders = async (_: Request, res: Response) => {
         select: {
             id: true,
             name: true,
+            email: true,
             phoneno: true,
             vehicleId: true,
             onduty: true,
@@ -360,9 +361,9 @@ export const formRoutes = async (_: Request, res: Response) => {
             };
         });
 
-        // TODO: lotssss
         const routes = await generateRoutes(routePackages, riderCount);
-        await postRoutesToRedis(routes);
+        // TODO: assign deliveries to respective routers as well
+        await assignRoutesToRiders(routes);
 
         return res
             .status(200)
