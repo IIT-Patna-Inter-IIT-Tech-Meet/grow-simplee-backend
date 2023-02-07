@@ -381,3 +381,31 @@ export const registerPackage = async (_req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+
+export const toggleOnduty = async (_req: Request, res: Response) => {
+    const req = _req as RiderAuthorizedRequest;
+    try {
+        const riderQuery = await prisma.rider.findFirst({
+            where: { id: req.riderId },
+            select: { onduty: true },
+        });
+        if (!riderQuery) {
+            return res.status(401).json({ success: false, message: "Expired authorization" });
+        }
+        const { onduty } = riderQuery;
+
+        const rider = await prisma.rider.update({
+            where: { id: req.riderId },
+            data: { onduty: !onduty },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Updated onduty of rider",
+            rider: serializeRider(rider),
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        return res.status(500).json({ succeess: false, message: "Internal Server Error" });
+    }
+};

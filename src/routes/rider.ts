@@ -36,5 +36,6 @@ router.put(
     validate(controller.registerPackageSchema),
     controller.registerPackage
 );
+router.put("/toggle-onduty", authorization(AUTH_PRIVILEGE.RIDER), controller.toggleOnduty);
 
 export default router;
