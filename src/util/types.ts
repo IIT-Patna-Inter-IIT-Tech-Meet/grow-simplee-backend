@@ -80,7 +80,20 @@ export type LatLong = {
     longitude: number;
 };
 
+export type LatLongWithPackage = LatLong & {
+    delivery: true;
+    itemId: string;
+};
+
 export type Matrix = {
     distanceMatrix: Array<Array<number>>;
     timeMatrix: Array<Array<number>>;
+};
+
+export type ItemAtom = {
+    latitude: number;
+    longitude: number;
+    id: string;
+    edd: Date;
+    volume: number;
 };

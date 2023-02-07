@@ -5,7 +5,11 @@ import { client as redisClient, RiderGeolocation, riderRepository } from "../uti
 const getRiderRespository = async (key: string) => {
     let riderRepositoryId = await redisClient.get(key);
     if (!riderRepositoryId) {
-        const riderEntity = riderRepository.createEntity();
+        const riderEntity = riderRepository.createEntity({
+            socketId: "<error>",
+            id: "<error>",
+            point: { latitude: 0, longitude: 0 },
+        });
         riderRepositoryId = await riderRepository.save(riderEntity);
 
         await riderRepository.expire(riderRepositoryId, 24 * 60 * 60); // 1 day

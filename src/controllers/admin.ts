@@ -10,6 +10,7 @@ import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
 
 import { prisma } from "../util/prisma";
 import { generateRoutes } from "../util/pathGenerator";
+import { postRoutesToRedis } from "../util/redis";
 
 // ----------LOGIN route----------
 // * route_type: public
@@ -318,12 +319,16 @@ export const getRidersWithFilters = async (req: Request, res: Response) => {
 export const formRoutes = async (_: Request, res: Response) => {
     // remove the deliveryTimestamp ones from inventoryItem first
     try {
+        const startOfNextDay = new Date();
+        startOfNextDay.setUTCHours(0, 0, 0, 0);
+        startOfNextDay.setDate(startOfNextDay.getDate() + 1);
+
         const packages = await prisma.inventoryItem.findMany({
-            where: {
-                delivery: {
-                    EDD: { lte: new Date(Date.now() + 24 * 60 * 60 * 1000) },
-                }, // 1 day
-            },
+            // where: {
+            //     delivery: {
+            //         EDD: { lte: startOfNextDay },
+            //     }, // 1 day
+            // },
             select: {
                 id: true,
                 length: true,
@@ -356,9 +361,12 @@ export const formRoutes = async (_: Request, res: Response) => {
         });
 
         // TODO: lotssss
-        await generateRoutes(routePackages, riderCount);
+        const routes = await generateRoutes(routePackages, riderCount);
+        await postRoutesToRedis(routes);
 
-        return res.status(200).json({ success: true, message: "Done" });
+        return res
+            .status(200)
+            .json({ success: true, message: `Generated ${routes.length} routes!` });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
         res.status(500).json({ success: false, message: "Internal Server Error" });

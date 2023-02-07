@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { LatLong, RiderAuthorizedRequest } from "../util/types";
+import { LatLong, LatLongWithPackage, RiderAuthorizedRequest } from "../util/types";
 import { client as redisClient, routeRepository } from "../util/redis";
 import { z } from "zod";
 
@@ -20,7 +20,9 @@ export const getRiderRoute = async (_req: Request, res: Response) => {
         const route = await routeRepository.fetch(routeRepoId);
 
         // Assumption: all the points are actually carefully jsonified points
-        const points = route.points.map((pointString): LatLong => JSON.parse(pointString));
+        const points = route.points.map(
+            (pointString): LatLongWithPackage => JSON.parse(pointString)
+        );
 
         return res
             .status(200)

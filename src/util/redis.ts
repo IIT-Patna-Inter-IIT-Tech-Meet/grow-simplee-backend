@@ -1,7 +1,9 @@
+import { prisma } from "./prisma";
 import { createClient } from "redis";
 import { Client, Entity, Point, Schema } from "redis-om";
 
 import { REDIS_URL } from "../config/config";
+import { ItemAtom } from "./types";
 
 export const redis = createClient({ url: REDIS_URL });
 await redis.connect();
@@ -70,3 +72,36 @@ const routesSchema = new Schema(Routes, {
 export const routeRepository = client.fetchRepository(routesSchema);
 
 await routeRepository.createIndex();
+
+//-----------UTILs store routes---------------
+export const postRoutesToRedis = async (routes: ItemAtom[][]) => {
+    try {
+        const riders = await prisma.rider.findMany({
+            where: { onduty: true },
+            select: { id: true },
+        });
+
+        console.assert(riders.length === routes.length);
+
+        riders.forEach(async (rider, idx) => {
+            const route = routeRepository.createEntity({
+                riderId: rider.id,
+                points: routes[idx].map(({ latitude, longitude, id }) =>
+                    JSON.stringify({
+                        latitude,
+                        longitude,
+                        itemId: id,
+                        delivery: true,
+                    })
+                ),
+            });
+
+            const routeRepositoryId = await routeRepository.save(route);
+
+            await client.set(`route:${rider.id}`, routeRepositoryId);
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        throw e;
+    }
+};
