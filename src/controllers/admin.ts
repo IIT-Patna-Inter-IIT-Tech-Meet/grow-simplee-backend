@@ -362,7 +362,6 @@ export const formRoutes = async (_: Request, res: Response) => {
         });
 
         const routes = await generateRoutes(routePackages, riderCount);
-        // TODO: assign deliveries to respective routers as well
         await assignRoutesToRiders(routes);
 
         return res

@@ -35,7 +35,6 @@ model Customer {
   address   String
   phoneno   String?  @db.VarChar(20)
 
-  // TODO: geolocation 
   latitude  Float @db.Float
   longitude Float @db.Float
 

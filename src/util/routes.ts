@@ -10,6 +10,8 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
             select: { id: true },
         });
 
+        await redisClient.set("last-assignment", Date.now().toString());
+
         console.assert(riders.length === routes.length);
 
         riders.forEach(async (rider, idx) => {
@@ -37,6 +39,9 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
             const routeRepositoryId = await routeRepository.save(route);
 
             await redisClient.set(`route:${rider.id}`, routeRepositoryId);
+
+            await routeRepository.expire(routeRepositoryId, 24 * 60 * 60) // 1 day
+            await redisClient.expire(`route:${rider.id}`, 24 * 60 * 60) // 1 day
         });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);

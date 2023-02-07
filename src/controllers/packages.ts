@@ -14,7 +14,7 @@ export const addPackageSchema = z.object({
         productName: z.string(),
         desc: z.string().optional(),
         AWB: z.string(),
-        EDD: z.string().datetime(),
+        EDD: z.coerce.date(),
         customerName: z.string(),
         address: z.string(),
         phoneno: z.string().optional(),
@@ -25,6 +25,7 @@ export const addPackage = async (_req: Request, res: Response) => {
     const {
         body: { machineId, SKU, productName, desc, AWB, EDD, customerName, address, phoneno },
     } = req;
+    EDD.setUTCHours(23, 59, 59, 99); // EOD
     // Requirements:
     // - machineId
     // - SKU
@@ -61,7 +62,6 @@ export const addPackage = async (_req: Request, res: Response) => {
             },
         });
 
-        // TODO: Verify
         const latLng = await geocodeAddress(address);
 
         const customer = await prisma.customer.upsert({

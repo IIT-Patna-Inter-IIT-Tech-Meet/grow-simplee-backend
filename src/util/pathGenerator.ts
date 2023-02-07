@@ -10,7 +10,6 @@ const VOLUME_CAPACITY_OF_VEHICLE = 3 * 2 * 2 * 100 * 100 * 100; // 3 m * 2 m * 3
 const WAREHOUSE_ADDRESS = "36, Off MG Road, Church Street, Bangalore";
 
 export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: number) => {
-    // TODO: generate route by calling the executable
     const GENERATOR_SOURCE_FILE = "routing.cpp";
     const GENERATOR = "routing.exe";
     const INPUT_FILE = "generator_input.txt";
@@ -42,7 +41,6 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     });
 
     // Form input
-
     const N = packages.length - 1;
     const M = riderCount;
     const wID = 0;
