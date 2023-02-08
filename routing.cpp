@@ -1551,65 +1551,6 @@ vector<vector<int>> GAsearch(
 }
 
 
-vector<vector<int>> solve(vector<vector<int>> &t,
-                          vector<vector<int>> &d,
-                          vector<int> &edd,    // edd[i] => deadline for ith delivery
-                          vector<int> &vol,    // volume[i] => volume for ith delivery
-                          int n,      // number of delivery points
-                          int wid,    // warehouse idx
-                          int m, // number of vehicles
-                          int cap     // vehicle cap
-)
-{
-        A = evaluate_A(t,d,edd,vol,n,wid,m,cap);
-        
-        pair<int,int> best = {INF,-1};
-        vector<vector<int>> default_sol({{-1}});
-        
-        
-        vector<vector<int>> savings_sol = savings(t,d,edd,vol,n,wid,m,cap);
-        int savings_cost = costfunction(savings_sol, t, d, edd, vol, n, wid, m, cap);
-        best = min(best,{savings_cost,0});
-        evaluate("Savings", savings_sol, t, d, edd, vol, n, wid, m, cap);
-        
-        
-        vector<vector<int>> rayfinder_sol = ray_finder(t, d, edd, vol, n, wid, m, cap);
-        int rayfinder_cost = costfunction(rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
-        best = min(best,{rayfinder_cost,1});
-        evaluate("Rayfinder", rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
-        
-        vector<vector<int>> ap3_sol;
-        try{
-                ap3_sol = ap3(t, d, edd, vol, n, wid, m, cap);
-                int ap3_cost = costfunction(ap3_sol, t, d, edd, vol, n, wid, m, cap);
-                best = min(best,{ap3_cost,2});
-                evaluate("ap3", ap3_sol, t, d, edd, vol, n, wid, m, cap);
-        }
-        catch(...){
-                cerr <<"Ap3 error\n";
-        }
-        
-        
-        
-        vector<vector<int>> GAsearch_sol = GAsearch(t,d,edd,vol,n,wid,m,cap);
-        int GAsearch_cost = costfunction(GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
-        best = min(best,{GAsearch_cost,3});
-        evaluate("GAsearch", GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
-        
-        
-        
-        switch(best.second){
-                case 0 : return savings_sol;
-                case 1 : return rayfinder_sol;
-                case 2 : return ap3_sol;
-                case 3 : return GAsearch_sol;
-                default: cerr << "No best found in solve\n";
-                        cout << -1;
-                        return default_sol;
-        }
-        
-}
-
 
 vector<vector<vector<int>>> process_for_output(vector<vector<int>> seq,
                                                vector<vector<int>> &t,
@@ -1654,6 +1595,73 @@ vector<vector<vector<int>>> process_for_output(vector<vector<int>> seq,
         return routes;
 }
 
+
+vector<vector<vector<int>>> solve(vector<vector<int>> &t,
+                          vector<vector<int>> &d,
+                          vector<int> &edd,    // edd[i] => deadline for ith delivery
+                          vector<int> &vol,    // volume[i] => volume for ith delivery
+                          int n,      // number of delivery points
+                          int wid,    // warehouse idx
+                          int m, // number of vehicles
+                          int cap     // vehicle cap
+)
+{
+        A = evaluate_A(t,d,edd,vol,n,wid,m,cap);
+        
+        pair<int,int> best = {INF,-1};
+        vector<vector<vector<int>>> default_sol({{{-1}}});
+        
+        
+        vector<vector<int>> savings_sol = savings(t,d,edd,vol,n,wid,m,cap);
+        vector<vector<vector<int>>> psavings_sol = process_for_output(savings_sol, t, d, edd, vol, n, wid, m, cap);
+        int savings_cost = costfunction(savings_sol, t, d, edd, vol, n, wid, m, cap);
+        best = min(best,{savings_cost,0});
+        evaluate("Savings", psavings_sol, t, d, edd, vol, n, wid, m, cap);
+        
+        
+        vector<vector<int>> rayfinder_sol = ray_finder(t, d, edd, vol, n, wid, m, cap);
+        vector<vector<vector<int>>> prayfinder_sol = process_for_output(rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
+        int rayfinder_cost = costfunction(rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
+        best = min(best,{rayfinder_cost,1});
+        evaluate("Rayfinder", prayfinder_sol, t, d, edd, vol, n, wid, m, cap);
+        
+        vector<vector<int>> ap3_sol;
+        vector<vector<vector<int>>> pap3_sol;
+        try{
+                ap3_sol = ap3(t, d, edd, vol, n, wid, m, cap);
+                pap3_sol = process_for_output(ap3_sol, t, d, edd, vol, n, wid, m, cap);
+                int ap3_cost = costfunction(ap3_sol, t, d, edd, vol, n, wid, m, cap);
+                best = min(best,{ap3_cost,2});
+                evaluate("ap3", pap3_sol, t, d, edd, vol, n, wid, m, cap);
+        }
+        catch(...){
+                cerr <<"Ap3 error\n";
+        }
+        
+        
+        
+        vector<vector<int>> GAsearch_sol = GAsearch(t,d,edd,vol,n,wid,m,cap);
+        vector<vector<vector<int>>> pGAsearch_sol = process_for_output(GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
+        int GAsearch_cost = costfunction(GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
+        best = min(best,{GAsearch_cost,3});
+        evaluate("GAsearch", pGAsearch_sol, t, d, edd, vol, n, wid, m, cap);
+        
+        
+        
+        switch(best.second){
+                case 0 : return psavings_sol;
+                case 1 : return prayfinder_sol;
+                case 2 : return pap3_sol;
+                case 3 : return pGAsearch_sol;
+                default: cerr << "No best found in solve\n";
+                        cout << -1;
+                        return default_sol;
+        }
+        
+}
+
+
+
 void process_edd(vector<int> &edd){
         int minedd = *min_element(edd.begin(),edd.end());
         for(auto &j : edd){
@@ -1667,7 +1675,7 @@ void process_edd(vector<int> &edd){
 
 int32_t main(){
         ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
-        /* freopen("/Users/jenish/Desktop/Inter iit/saved_input.txt","r",stdin); */
+//        freopen("/Users/jenish/Desktop/Inter iit/saved_input.txt","r",stdin);
         //        freopen("/Users/jenish/Desktop/Inter iit/out.txt","w",stdout);
         
         int n,  // number of delivery points excluding warehouse. So total (n + 1) locations
@@ -1683,14 +1691,14 @@ int32_t main(){
         read(d,n);
         read(edd,n);
         read(vol,n);
+        vol = vector<int> (n + 1);
         maxv = *max_element(vol.begin(), vol.end());
         edd[wid] = INF;
         vol[wid] =  0;
         process_edd(edd);
         
-        vector<vector<int>> solution = solve(t, d, edd, vol, n, wid, m, cap);
-        evaluate("Solution", solution, t, d, edd, vol, n, wid, m, cap);
-        vector<vector<vector<int>>> routes = process_for_output(solution, t, d, edd, vol, n, wid, m, cap);
+
+        vector<vector<vector<int>>> routes = solve(t, d, edd, vol, n, wid, m, cap);
         evaluate("Final Solution", routes, t, d, edd, vol, n, wid, m, cap);
         
         
