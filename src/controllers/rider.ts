@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { Delivery, Pickup, Prisma } from "@prisma/client";
+import { Delivery, InventoryItem, Pickup, Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
 import { COOKIE_CONFIG, TOKEN_SECRET } from "../config/config";
@@ -334,6 +334,88 @@ export const getPastPackages = async (_req: Request, res: Response) => {
     }
 };
 
+type DeliveryWithItems = Delivery & {
+    items: InventoryItem[];
+};
+const cascadeDeleteDelivery = async (delivery: DeliveryWithItems) => {
+    if (!delivery.riderId || !delivery.deliveryTimestamp) {
+        throw "Removing a possible undelivered item";
+    }
+    const archivedDelivery = await prisma.archivedDelivery.create({
+        data: {
+            id: delivery.id,
+            EDD: delivery.EDD,
+            AWB: delivery.AWB,
+            customerId: delivery.customerId,
+            riderId: delivery.riderId,
+            deliveryTimestamp: delivery.deliveryTimestamp,
+        },
+    });
+
+    const promises: Promise<boolean>[] = [];
+    delivery.items.forEach((item) => {
+        promises.push(
+            new Promise((resolve, reject) => {
+                prisma.archivedItem
+                    .create({
+                        data: {
+                            id: item.id,
+                            length: item.length,
+                            breadth: item.breadth,
+                            height: item.height,
+                            weight: item.weight,
+                            productId: item.productId,
+                            deliveryId: archivedDelivery.id,
+                        },
+                    })
+                    .then(() => resolve(true))
+                    .catch(() => reject(false));
+            })
+        );
+
+        promises.push(
+            new Promise((resolve, reject) => {
+                // Delete done items
+                prisma.inventoryItem
+                    .delete({
+                        where: { id: item.id },
+                    })
+                    .then(() => resolve(true))
+                    .catch(() => reject(false));
+            })
+        );
+    });
+
+    await Promise.all(promises);
+
+    // Delete active record
+    await prisma.delivery.delete({
+        where: { id: delivery.id },
+    });
+};
+
+const cascadeDeletePickup = async (pickup: Pickup) => {
+    if (!pickup.riderId || !pickup.pickupTimestamp) {
+        throw "Removing a possible unpickedup item";
+    }
+    await prisma.archivedPickup.create({
+        data: {
+            id: pickup.id,
+            EDP: pickup.EDP,
+            AWB: pickup.AWB,
+            customerId: pickup.customerId,
+            riderId: pickup.riderId,
+            pickupTimestamp: pickup.pickupTimestamp,
+            productId: pickup.productId,
+        },
+    });
+
+    // Delete active record
+    await prisma.pickup.delete({
+        where: { id: pickup.id },
+    });
+};
+
 // -------SUBMIT DELIVERY route----------
 // * route_type: private/authorized
 // * relative url: /rider/register-package
@@ -361,15 +443,18 @@ export const registerPackage = async (_req: Request, res: Response) => {
             return res.status(404).json({ sucess: false, message: "Item not found!" });
 
         if (body.delivery) {
-            item = await prisma.delivery.update({
+            const delivery = await prisma.delivery.update({
                 where: { id: body.itemId },
                 data: { deliveryTimestamp: new Date(Date.now()) },
+                include: { items: true },
             });
+            await cascadeDeleteDelivery(delivery);
         } else {
-            item = await prisma.pickup.update({
+            const pickup = await prisma.pickup.update({
                 where: { id: body.itemId },
                 data: { pickupTimestamp: new Date(Date.now()) },
             });
+            await cascadeDeletePickup(pickup);
         }
 
         return res.status(200).json({

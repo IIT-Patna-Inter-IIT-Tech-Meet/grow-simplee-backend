@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { routeRepository } from "./redis";
-import { ItemAtom } from "./types";
+import { ItemAtom, RoutePoint } from "./types";
 import { client as redisClient } from "./redis";
 
 export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
@@ -17,14 +17,20 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
         riders.forEach(async (rider, idx) => {
             const route = routeRepository.createEntity({
                 riderId: rider.id,
-                points: routes[idx].map(({ latitude, longitude, id }) =>
-                    JSON.stringify({
-                        latitude,
-                        longitude,
-                        itemId: id,
-                        delivery: true,
-                    })
-                ),
+                points: routes[idx].map(({ latitude, longitude, id }) => {
+                    const feature: RoutePoint = {
+                        type: "Feature",
+                        geometry: {
+                            type: "Point",
+                            coordinates: [latitude, longitude],
+                        },
+                        properties: {
+                            itemId: id,
+                            delivery: true,
+                        },
+                    };
+                    return JSON.stringify(feature);
+                }),
             });
 
             routes[idx].forEach(async ({ id: itemId }) => {
@@ -40,8 +46,8 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
 
             await redisClient.set(`route:${rider.id}`, routeRepositoryId);
 
-            await routeRepository.expire(routeRepositoryId, 24 * 60 * 60) // 1 day
-            await redisClient.expire(`route:${rider.id}`, 24 * 60 * 60) // 1 day
+            await routeRepository.expire(routeRepositoryId, 24 * 60 * 60); // 1 day
+            await redisClient.expire(`route:${rider.id}`, 24 * 60 * 60); // 1 day
         });
     } catch (e) {
         console.error(`[#] ERROR: ${e}`);
