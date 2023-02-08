@@ -78,16 +78,26 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     try {
         await asyncExec(CMD);
         const buffer = fs.readFileSync(OUTPUT_FILE);
-        const solutionBuffer = buffer.toString().replace(/\r/g, "").split("solution\n\n")[1];
+        const solutionBuffer = buffer.toString().replace(/\r/g, "").split('\n');
 
-        const solution = solutionBuffer
-            .trim()
-            .split("\n")
-            .map((x) => {
-                const y = x.trim().split(" ");
-                return y[0] === "" ? [] : y.map((num) => Number(num));
-            });
-        for (let i = solution.length; i < M; ++i) solution.push([]);
+        const solution: Array<Array<number>> = [];
+        for (let i = 0; i < solutionBuffer.length; ++i) {
+            if (solutionBuffer[i].trim() === '') continue;
+            const daysScheduled = Number(solutionBuffer[i].trim());
+            if (daysScheduled > 0) {
+                solution.push(solutionBuffer[i + 1].trim().split(' ').map((x) => Number(x)));
+            } else solution.push([])
+            i += daysScheduled;
+        }
+
+        // const solution = solutionBuffer
+        //     .trim()
+        //     .split("\n")
+        //     .map((x) => {
+        //         const y = x.trim().split(" ");
+        //         return y[0] === "" ? [] : y.map((num) => Number(num));
+        //     });
+        // for (let i = solution.length; i < M; ++i) solution.push([]);
 
         // Return the formed Routes;
         return solution.map((riderRoute) => riderRoute.map((pointIdx) => packages[pointIdx]));
