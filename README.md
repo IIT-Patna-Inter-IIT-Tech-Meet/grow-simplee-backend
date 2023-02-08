@@ -37,7 +37,7 @@
 
 - Install the Redis server.
 
-  - ## USE THE FOLLOWING WAY TO START REDIS SERVER (Platform independent).
+  - ### USE THE FOLLOWING WAY TO START REDIS SERVER (Platform independent).
     ```bash
     $ docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
     ``` 

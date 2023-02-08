@@ -80,8 +80,8 @@ const generateProduct = async (sku: string | undefined): Promise<Product> => {
         });
         return product;
     } catch (e) {
-        console.log('ERROR: ', sku, e);
-        throw "Mast error"
+        console.log("ERROR: ", sku, e);
+        throw "Mast error";
     }
 };
 
@@ -138,7 +138,7 @@ const generateDelivery = async (
             EDD,
             customerId: customer.id,
         },
-        include: { customer: true }
+        include: { customer: true },
     });
 
     console.log(`Delivery record created with AWB: ${delivery.AWB}`);
@@ -172,7 +172,7 @@ const generatePackage = async (
     });
 
     console.log(`inventory item added with with id: ${inventoryItem.id}`);
-    return { latitude: delivery.customer.latitude, longitude: delivery.customer.longitude }
+    return { latitude: delivery.customer.latitude, longitude: delivery.customer.longitude };
 };
 
 const localTestingDataset = () => {
@@ -215,7 +215,7 @@ const cachedDataSchema = z.array(
         product_id: z.string(),
         EDD: z.string(),
         latitude: z.number(),
-        longitude: z.number()
+        longitude: z.number(),
     })
 );
 const useCachedDataset = async (cachedDataset: string) => {
@@ -246,16 +246,15 @@ const useCachedDataset = async (cachedDataset: string) => {
             record.names,
             record.latitude,
             record.longitude
-        )
+        );
     }
 
     const response = await Promise.all(promises);
 
-
     if (response.includes(false)) {
         console.error("BRUHHHH");
     }
-}
+};
 const testDataset = async (DATASET_FILE: string) => {
     if (fs.existsSync(`cache.${DATASET_FILE}`)) {
         await useCachedDataset(`cache.${DATASET_FILE}`);
@@ -296,7 +295,7 @@ const testDataset = async (DATASET_FILE: string) => {
             undefined,
             undefined
         );
-        parsedRecords.push({...record, ...latLng})
+        parsedRecords.push({ ...record, ...latLng });
     }
 
     const response = await Promise.all(promises);
