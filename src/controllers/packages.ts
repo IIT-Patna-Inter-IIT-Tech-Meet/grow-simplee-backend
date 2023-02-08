@@ -289,7 +289,14 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
                 },
                 where: {
                     AND: [
-                        { delivery: { deliveryTimestamp: { lte: body.deliveryAfter, gte: body.deliveryAfter } } },
+                        {
+                            delivery: {
+                                deliveryTimestamp: {
+                                    lte: body.deliveryAfter,
+                                    gte: body.deliveryAfter,
+                                },
+                            },
+                        },
                     ],
                 },
                 select: {

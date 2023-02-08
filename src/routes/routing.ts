@@ -15,5 +15,6 @@ router.get(
 );
 router.get("/get-route", authorization(AUTH_PRIVILEGE.RIDER), controller.getRoute);
 router.get("/get-all-routes", authorization(AUTH_PRIVILEGE.ADMIN), controller.getAllRoutes);
+router.get("/generate-route-stats", authorization(AUTH_PRIVILEGE.ADMIN), controller.generateStats);
 
 export default router;

@@ -115,6 +115,8 @@ const formDate = (edd: string | undefined) => {
         return new Date(Date.now() + 1000 * 60 * randomInteger(24 * 60, 24 * 60 * 5));
     }
 
+    console.log(d);
+
     const d = new Date(edd);
     d.setUTCHours(20, 0, 0, 0); // 8 o'clock in the evening
     return d;
@@ -174,7 +176,6 @@ const generatePackage = async (
     console.log(`inventory item added with with id: ${inventoryItem.id}`);
     return { latitude: delivery.customer.latitude, longitude: delivery.customer.longitude };
 };
-
 
 const xlDataSchema = z.array(
     z.object({

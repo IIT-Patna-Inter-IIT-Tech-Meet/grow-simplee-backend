@@ -343,7 +343,7 @@ export const formRoutes = async (_: Request, res: Response) => {
                 },
             },
         });
-        
+
         const riderCount = await prisma.rider.count({
             where: { onduty: true },
         });

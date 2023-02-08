@@ -63,8 +63,8 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
         const timeRow: Array<number> = [];
         elements.forEach((element: any) => {
             if (element.status !== "OK") {
-                console.log(origin, destination)
-                console.dir(data, { depth : null });
+                console.log(origin, destination);
+                console.dir(data, { depth: null });
                 console.error(`[#] ERROR: Non OK Status received`);
                 throw "Non OK Status received";
             }
@@ -103,10 +103,10 @@ export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
             );
 
             d.forEach((v, idx) => {
-                dRows[idx] = dRows[idx].concat(v)
+                dRows[idx] = dRows[idx].concat(v);
             });
             t.forEach((v, idx) => {
-                tRows[idx] = tRows[idx].concat(v)
+                tRows[idx] = tRows[idx].concat(v);
             });
         }
 

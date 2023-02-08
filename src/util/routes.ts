@@ -10,8 +10,6 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
             select: { id: true },
         });
 
-        await redisClient.set("last-assignment", Date.now().toString());
-
         console.assert(riders.length === routes.length);
 
         riders.forEach(async (rider, idx) => {
@@ -37,6 +35,7 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
                 await prisma.inventoryItem.update({
                     where: { id: itemId },
                     data: {
+                        shipped: true,
                         delivery: { update: { riderId: rider.id } },
                     },
                 });

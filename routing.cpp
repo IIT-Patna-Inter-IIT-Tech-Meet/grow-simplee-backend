@@ -1,20 +1,35 @@
+/*
+ variable notations :
+ n  => number of delivery points excluding warehouse. So total (n + 1) locations
+ m  => number of delivery vehicles
+ wid => index of warehouse
+ cap => capacity of each vehicle
+ t => (n + 1) x (n + 1) matrix. t[i][j] => time in seconds taken to reach location j from location i
+ d => (n + 1) x (n + 1) matrix. d[i][j] => distance in meters taken to location j from location i
+ edd => vector of (n + 1). edd[i] => deadline in seconds for location i
+ vol => vector of (n + 1). vol[i] => volume for location i
+ */
+
+
+
+
 #include <bits/stdc++.h>
 #define NINF -1000000000000000000
 #define INF 1000000000000000000
 #define FITCONST 1000000000000
 #define int long long
-//#define FITCONST 1000000000
-//#define INF 1000000000
-//#define NINF -1000000000
-#define nl cout<<endl;
+#define nl cerr<<endl;
 #define sp <<" "<<
 using namespace std;
 
-template<class T> using minpq = priority_queue<T,vector<T>,greater<T> >;
+template<class T> using minpq = priority_queue<T,vector<T>,greater<T> >;        // minimum priority queue
 
-int A;
+int A,  // coefficient used in cost function to prioritise on time deliveries
+maxv;   // maxvolume among all deliveries
+int workwindow = 12 * 3600;     // number of working hours per day * seconds in an hour
 
 
+// UTILITY FUNCTIONS
 std::default_random_engine generator;
 std::uniform_int_distribution<long> distribution(0,LONG_MAX);
 int myrandom(){
@@ -39,19 +54,30 @@ void read(vector<int> &a,int N){
 void print(vector<vector<int>> &a){
         for(auto &v:a){
                 for(auto &j:v){
-                        cout << j <<" ";
+                        cerr << j <<" ";
                 }
                 nl;
         }
 }
 void print(vector<int> &v){
         for(auto &j:v){
-                cout << j <<" ";
+                cerr << j <<" ";
         }
         nl;
 }
+void print(vector<vector<vector<int>>> &a){
+        for(auto &v:a){
+                cerr << "New rider : \n";
+                print(v);
+        }
+}
 
-int costfunction(int missededd,int tott,int totd){
+// please set cost function as per your requirements
+int costfunction(int missededd, // total number of missed on time deliveries
+                 int tott,      // total time
+                 int totd       // total distance
+)
+{
         return A * (missededd) + sqrt(tott * totd);
 }
 
@@ -64,7 +90,7 @@ int costfunction(vector<int> &route,
                  int m // number of vehicles
 )
 {
-        int missededd = 0, tott = 0, totd = 0;
+        int missededd = 0, tott = 0, totd = 0, days = 0;
         for(int i = 0;i < route.size();i++){
                 if(!i){
                         tott += t[wid][route[0]];
@@ -73,6 +99,13 @@ int costfunction(vector<int> &route,
                 else{
                         tott += t[route[i - 1]][route[i]];
                         totd += d[route[i - 1]][route[i]];
+                }
+                if((tott - 1) / workwindow != days){
+                        days++;
+                        tott = days * workwindow;
+                        if(route[i] != wid){
+                                tott += t[route[i - 1]][route[i]];
+                        }
                 }
                 if(route[i] != wid and edd[route[i]] < tott){
                         missededd++;
@@ -97,7 +130,7 @@ int costfunction(vector<vector<int>> &seq,
                 if(v.empty()){
                         continue;
                 }
-                int pretime = 0, predist = 0;
+                int pretime = 0, predist = 0, days = 0;
                 for(int i = 0;i < v.size();i++){
                         if(!i){
                                 pretime += t[wid][v[0]];
@@ -106,6 +139,13 @@ int costfunction(vector<vector<int>> &seq,
                         else{
                                 pretime += t[v[i - 1]][v[i]];
                                 predist += d[v[i - 1]][v[i]];
+                        }
+                        if((pretime - 1) / workwindow != days){
+                                days++;
+                                pretime = days * workwindow;
+                                if(v[i] != wid){
+                                        pretime += t[v[i - 1]][v[i]];
+                                }
                         }
                         if(v[i] != wid and edd[v[i]] < pretime){
                                 missededd++;
@@ -119,6 +159,7 @@ int costfunction(vector<vector<int>> &seq,
         return costfunction(missededd,tott,totd);
 }
 
+// utility function used to analyse solution inside console
 void evaluate(string approach,
               vector<vector<int>> &seq,
               vector<vector<int>> &t,
@@ -129,15 +170,16 @@ void evaluate(string approach,
               int wid,    // warehouse idx
               int m, // number of vehicles
               int cap     // vehicle cap
-              )
+)
 {
         
         int missededd = 0, tott = 0, totd = 0;
+        vector<int> missed;
         for(auto &v : seq){
                 if(v.empty()){
                         continue;
                 }
-                int pretime = 0, predist = 0;
+                int pretime = 0, predist = 0, days = 0;
                 for(int i = 0;i < v.size();i++){
                         if(!i){
                                 pretime += t[wid][v[0]];
@@ -147,8 +189,16 @@ void evaluate(string approach,
                                 pretime += t[v[i - 1]][v[i]];
                                 predist += d[v[i - 1]][v[i]];
                         }
+                        if((pretime - 1) / workwindow != days){
+                                days++;
+                                pretime = days * workwindow;
+                                if(v[i] != wid){
+                                        pretime += t[v[i - 1]][v[i]];
+                                }
+                        }
                         if(v[i] != wid and edd[v[i]] < pretime){
                                 missededd++;
+                                missed.push_back(v[i]);
                         }
                 }
                 pretime += t[v.back()][wid];
@@ -156,10 +206,57 @@ void evaluate(string approach,
                 tott += pretime;
                 totd += predist;
         }
-        
-        cout << approach;nl;
-        cout << "Missed EDD :" sp missededd sp "Total time :" sp tott sp "Total distance" sp totd sp "Cost :" sp costfunction(missededd, tott, totd);nl;
+        for(auto j : missed){
+                cout << j;nl;
+        }
+        cerr << approach;nl;
+        cerr << "Missed EDD :" sp missededd sp "\nTotal time :" sp tott sp " seconds or " sp (tott / 3600.0) sp " hours" sp "\nTotal distance in km: " sp (totd / 1000.0) sp "Cost :" sp costfunction(missededd, tott, totd);nl;
         print(seq);
+}
+
+
+void evaluate(string approach,
+              vector<vector<vector<int>>> &routes,
+              vector<vector<int>> &t,
+              vector<vector<int>> &d,
+              vector<int> &edd,    // edd[i] => deadline for ith delivery
+              vector<int> &vol,    // volume[i] => volume for ith delivery
+              int n,      // number of delivery points
+              int wid,    // warehouse idx
+              int m, // number of vehicles
+              int cap     // vehicle cap
+)
+{
+        
+        int missededd = 0, tott = 0, totd = 0;
+        for(auto &riderroutes : routes){
+                if(riderroutes.empty()){
+                        continue;
+                }
+                for(int i = 0;i < riderroutes.size();i++){
+                        int day = i + 1;
+                        
+                        auto &route = riderroutes[i];
+                        if(route.empty()){
+                                continue;
+                        }
+                        tott += t[wid][route[0]];
+                        totd += d[wid][route[0]];
+                        for(int j = 1;j < route.size();j++){
+                                tott += t[route[j - 1]][route[j]];
+                                totd += d[route[j - 1]][route[j]];
+                                if(route[j] != wid and edd[route[j]] < day * workwindow){
+                                        missededd++;
+                                }
+                        }
+                        
+                }
+                
+        }
+        
+        cerr << approach;nl;
+        cerr << "Missed EDD :" sp missededd sp "\nTotal time :" sp tott sp " seconds or " sp (tott / 3600.0) sp " hours" sp "\nTotal distance in km: " sp (totd / 1000.0) sp "Cost :" sp costfunction(missededd, tott, totd);nl;
+        print(routes);
 }
 
 
@@ -173,6 +270,8 @@ vector<int> remove_wid(vector<int> route,int wid){
         return reroute;
 }
 
+
+// if at any point in route, the total volume of deliveries exceed, then the driver is routed back to warehouse to start with an empty bag
 vector<int> handle_capacity(vector<int> route,
                             vector<int> &vol,    // volume[i] => volume for ith delivery
                             int n,      // number of delivery points
@@ -181,11 +280,15 @@ vector<int> handle_capacity(vector<int> route,
                             int cap     // vehicle cap
 )
 {
-        route = remove_wid(route,wid);
         vector<int> reroute;
         int sum = 0;
         for(auto j : route){
-                sum += vol[j];
+                if(j == wid){
+                        sum = 0;
+                }
+                else{
+                        sum += vol[j];
+                }
                 if(sum > cap){
                         sum = vol[j];
                         reroute.push_back(wid);
@@ -195,34 +298,83 @@ vector<int> handle_capacity(vector<int> route,
         return reroute;
 }
 
-vector<vector<int>> handle_capacity(vector<vector<int>> &seq,
-                                    vector<int> &vol,    // volume[i] => volume for ith delivery
-                                    int n,      // number of delivery points
-                                    int wid,    // warehouse idx
-                                    int m, // number of vehicles
-                                    int cap     // vehicle cap
-)
-{
-        vector<vector<int>> ans;
-        for(auto &v : seq){
-                ans.emplace_back();
-                for(int i = 0,sum = 0;i < v.size();i++){
-                        if(v[i] == wid){
-                                sum = 0;
-                        }
-                        else{
-                                sum += vol[v[i]];
-                        }
-                        if(sum > cap){
-                                ans.back().push_back(wid);
-                                sum = vol[v[i]];
-                        }
-                        ans.back().push_back(v[i]);
-                }
+
+// if at any point during the route, the total working time for the day exceeds working window, then it driver is routed back to warehouse. This marks the end of one working day
+vector<int> handle_workwindow(vector<int> route,int wid,vector<vector<int>> &t){
+        if(route.empty()){
+                return route;
         }
-        return ans;
+        vector<int> reroute({route[0]});
+        int tott = t[wid][route[0]], days = 0;
+        for(int i = 1;i < route.size();i++){
+                tott += t[route[i]][route[i - 1]];
+                if((tott - 1) / workwindow != days){
+                        days++;
+                        if(reroute.back() != wid){
+                                reroute.push_back(wid);
+                        }
+                        tott = days * workwindow + t[wid][route[i]];
+                }
+                if(route[i] == wid and reroute.back() == wid){
+                        continue;
+                }
+                reroute.push_back(route[i]);
+        }
+        
+        return reroute;
 }
 
+
+// routes driver back to warehouse incase the volume of deliveries exceed the vehicle capacity or working hours of driver exceeds workwindow limit
+vector<int> handle_workandvol(vector<int> route,
+                              vector<int> &vol,    // volume[i] => volume for ith delivery
+                              vector<vector<int>> &t,
+                              int n,      // number of delivery points
+                              int wid,    // warehouse idx
+                              int m, // number of vehicles
+                              int cap     // vehicle cap
+)
+{
+        if(route.empty()){
+                return route;
+        }
+        if(maxv == 0){  // in case there is no volume constraint
+                return handle_workwindow(route,wid,t);
+        }
+        vector<int> reroute({route[0]});
+        int tott = t[wid][route[0]], totv = vol[route[0]], days = 0;
+        
+        for(int i = 1;i < route.size();i++){
+                tott += t[route[i]][route[i - 1]];
+                totv += vol[route[i]];
+                if((tott - 1) / workwindow != days){    // extra day
+                        days++;
+                        reroute.push_back(wid);
+                        tott = days * workwindow + t[wid][route[i]];
+                        totv = vol[route[i]];
+                }
+                
+                if(totv > cap){ // this if wont be triggered if above if is already triggered
+                        reroute.push_back(wid);
+                        tott -= t[route[i]][route[i - 1]];
+                        tott += t[route[i - 1]][wid];
+                        // maybe here day is over
+                        if((tott - 1) / workwindow != days){
+                                days++;
+                                tott = t[wid][route[i]];
+                        }
+                        else{
+                                tott += days * workwindow + t[wid][route[i]];
+                        }
+                        totv = vol[route[i]];
+                }
+                
+                reroute.push_back(route[i]);
+        }
+        return reroute;
+}
+
+// fitness function of Genetic Algorithm
 int get_fitness(vector<int> &seq,
                 vector<vector<int>> &t,
                 vector<vector<int>> &d,
@@ -232,6 +384,7 @@ int get_fitness(vector<int> &seq,
                 int m // number of vehicles
 )
 {
+        // fitness is inversely related to cost function
         return (INF / 1000) / costfunction(seq, t, d, edd, n, wid, m);
 }
 
@@ -240,14 +393,15 @@ void mutate(vector<int> &seq){
         if(l > r){
                 swap(l,r);
         }
-        if(myrandom() % 2){
+        if(myrandom() % 2){     // one swap mutation
                 swap(seq[l],seq[r]);
         }
-        else{
+        else{   // subarray reverse mutation
                 reverse(seq.begin() + l,seq.begin() + r);
         }
 }
 
+// used to generate initial population from a seq for genetic algorithm
 vector<vector<int>> genesis(vector<int> seq,
                             vector<vector<int>> &t,
                             vector<vector<int>> &d,
@@ -347,10 +501,11 @@ vector<vector<int>> genesis(vector<int> seq,
         return pop;
 }
 
-int spin(vector<int> &roulette){
+int spin(vector<int> &roulette){        // spin function returns id as per weighted probability distribution. High fitness, high probability to get selected
         return upper_bound(roulette.begin(),roulette.end(),myrandom() % roulette.back()) - roulette.begin();
 }
 
+// greedy crossover
 vector<int> HGreX_crossover(vector<int> &p1,
                             vector<int> &p2,
                             vector<vector<int>> &t,
@@ -391,6 +546,7 @@ vector<int> HGreX_crossover(vector<int> &p1,
         return child;
 }
 
+// Alternating edge crossover
 vector<int> AEX_crossover(vector<int> &p1,
                           vector<int> &p2,
                           int wid
@@ -432,6 +588,7 @@ vector<int> AEX_crossover(vector<int> &p1,
         return child;
 }
 
+// partition crossover variant
 vector<int> PMX_crossover(vector<int> &p1,
                           vector<int> &p2,
                           int wid
@@ -465,6 +622,8 @@ vector<int> PMX_crossover(vector<int> &p1,
         return child;
 }
 
+
+// Genetic Algorithm Optimiser
 vector<int> GA_Optimise(vector<int> seq,
                         vector<vector<int>> &t,
                         vector<vector<int>> &d,
@@ -505,10 +664,10 @@ vector<int> GA_Optimise(vector<int> seq,
                         bestfitness = fitness;
                 }
         }
-        for(int temperature = generations;temperature >= 0;temperature--){
+        
+        for(int temperature = generations;temperature >= 0;temperature--){      // simulated annealing
+                int p1 = 0,p2 = 0;      // parent1 , parent2
                 // find theta = f(temp) such that initially it has tendency to be close to 1 but later to 0
-
-                int p1 = 0,p2 = 0;
                 int theta = ((1.0 * temperature) / generations) * (myrandom() % probability_scale);
                 if(theta >= probability_scale / 2){
                         // do random selection
@@ -519,9 +678,9 @@ vector<int> GA_Optimise(vector<int> seq,
                 else{   // roulette selection
                         p1 = spin(roulette);
                         p2 = spin(roulette);
-
+                        
                 }
-
+                
                 vector<int> child;
                 // do crossover
                 switch(myrandom() % 3){
@@ -536,8 +695,8 @@ vector<int> GA_Optimise(vector<int> seq,
                         default :
                                 child = AEX_crossover(pop[p1],pop[p2],wid);
                 };
-
-                child = handle_capacity(child, vol, n, wid, m, cap);
+                
+                child = handle_workandvol(child, vol, t, n, wid, m, cap);
                 int fitness = get_fitness(child,t,d,edd,n,wid,m);
                 roulette.push_back(roulette.back() + fitness);
                 child = remove_wid(child,wid);
@@ -546,11 +705,11 @@ vector<int> GA_Optimise(vector<int> seq,
                         fittest = child;
                         bestfitness = fitness;
                 }
-
+                
                 // do probab mutation on child
                 if(myrandom() % 20 == 0){
                         mutate(child);
-                        child = handle_capacity(child, vol, n, wid, m, cap);
+                        child = handle_workandvol(child, vol, t, n, wid, m, cap);
                         fitness = get_fitness(child,t,d,edd,n,wid,m);
                         child = remove_wid(child,wid);
                         roulette.push_back(roulette.back() + fitness);
@@ -565,6 +724,8 @@ vector<int> GA_Optimise(vector<int> seq,
         return fittest;
 }
 
+
+// density based clustering
 vector<vector<int>> get_clusters(vector<int> &starting_points,
                                  unordered_set<int> &rem,
                                  vector<vector<int>> &t,
@@ -615,14 +776,13 @@ void euler_tour(int i,
                 vector<vector<int>> &mst,
                 unordered_set<int> &rem,
                 vector<int> &tour,
-                unordered_map<int,int> &p
-                )
+                unordered_map<int,int> &p       // used to keep track of already travelled edges
+)
 {
         if(rem.count(i)){
                 tour.push_back(i);
                 rem.erase(i);
         }
-//        cout << i sp p[i] sp mst[i].size() sp endl;
         for(;p[i] < mst[i].size();){
                 euler_tour(mst[i][p[i]++],mst,rem,tour,p);
         }
@@ -715,7 +875,7 @@ vector<vector<int>> ray_finder(
         sort(times.begin(),times.end());
         
         vector<int> rushhour;   // make rush hour binary or linear
-        if(n <= 100){
+        if(n <= 200){
                 for(int i = 0;i < times.size();i++){
                         rushhour.push_back(i);
                 }
@@ -746,22 +906,40 @@ vector<vector<int>> ray_finder(
                         partitions.back().push_back(times[i]);
                 }
                 
-                vector<vector<int>> seq(m);
+                vector<vector<int>> seq(m);     // each sequence represents a ray
                 
                 // distribute among seq but time efficiently!
-                // improvise here please
-                for(int j = 0;j < partitions.size();j++){
-                        for(int i = 0;i < partitions[j].size();i++){
-                                seq[i].push_back(partitions[j][i].second);
+                // Complexity : (m * m) * (n / m)
+                // m = n / 20
+                for(int i = 0;i < partitions.size();i++){
+                        if(i == 0){
+                                for(int j = 0;j < partitions[i].size();j++){
+                                        seq[j].push_back(partitions[i][j].second);
+                                }
+                        }
+                        else{
+                                unordered_set<int> rem;
+                                for(int k = 0;k < m;k++){
+                                        rem.insert(k);
+                                }
+                                for(auto [edd,j] : partitions[i]){
+                                        pair<int,int> best = {INF,-1};
+                                        for(auto k : rem){
+                                                best = min(best,{d[seq[k].back()][j],k});
+                                        }
+                                        seq[best.second].push_back(j);
+                                        rem.erase(best.second);
+                                }
                         }
                 }
+                
                 
                 unordered_set<int> rem;
                 for(int i = boundary + 1;i < times.size();i++){
                         rem.insert(times[i].second);
                 }
                 
-                vector<int> starting_points;
+                vector<int> starting_points;    // ending points of each ray serves as starting points of clusters
                 for(auto &v : seq){
                         if(v.empty()){
                                 starting_points.push_back(wid);
@@ -778,13 +956,16 @@ vector<vector<int>> ray_finder(
                         }
                         vector<int> route = christofides(clusters[i],t,d,edd,vol,n,wid,cap);
                         for(auto j : route){
-                                if(j == seq[i].back()){
+                                if(!seq[i].empty() and j == seq[i].back()){
                                         continue;
                                 }
                                 seq[i].push_back(j);
                         }
                 }
-                seq = handle_capacity(seq, vol, n, wid, m, cap);
+                
+                for(auto &route : seq){
+                        route = handle_workandvol(route, vol, t, n, wid, m, cap);
+                }
                 
                 int cost = costfunction(seq, t, d, edd, vol, n, wid, m, cap);
                 if(cost < bestcost){
@@ -796,13 +977,239 @@ vector<vector<int>> ray_finder(
                 if(route.empty()){
                         continue;
                 }
-                route = GA_Optimise(route, t, d, edd, vol, n, wid, m, cap, (1e8 / (n * n)));
-                route = handle_capacity(route, vol, n, wid, m, cap);
+                route = GA_Optimise(route, t, d, edd, vol, n, wid, m, cap, max((int)100,(int)(1e6 / (n * n))));
+                route = handle_workandvol(route, vol, t, n, wid, m, cap);
         }
         return best;
 }
 
 
+int cluster_id = 2;
+
+class Cluster{
+public:
+        
+        int id,parent,child1,child2;
+        vector<int>nodes;
+        
+        Cluster(){
+        }
+        
+        Cluster(int id,vector<int>&nodes,int parent=-1,int child1=-1, int child2=-1){
+                this->id=id;
+                this->nodes=nodes;
+                this->parent=parent;
+                this->child1=child1;
+                this->child2=child2;
+        }
+        
+        bool operator< (const Cluster &other) const {
+                return id < other.id;
+        }
+        
+};
+
+int inner_distance(Cluster cluster,vector<vector<int>> &distance_matrix){
+        int sum=0;
+        for(int i=0;i<cluster.nodes.size();i++){
+                for(int j=i+1;j<cluster.nodes.size();j++){
+                        int t1=distance_matrix[cluster.nodes[i]][cluster.nodes[j]];
+                        sum+=(t1*t1);
+                }
+        }
+        return sum;
+}
+int cost(vector<int>&nodes,int i1,int i2,vector<vector<int>> &distance_matrix){
+        int sum=0;
+        for(int i=0;i<nodes.size();i++){
+                int x=min(distance_matrix[nodes[i]][nodes[i1]],distance_matrix[nodes[i]][nodes[i2]]);
+                sum+=(x*x);
+        }
+        return sum;
+}
+
+// Main k-medoid Fxn
+pair<Cluster,Cluster> kmedoid(vector<vector<int>> &distance_matrix, Cluster &cluster){
+        
+        int iterations=min((int)500,(int)cluster.nodes.size());
+        int sz=cluster.nodes.size();
+        int i1=1+(rand()%(sz-1));
+        int i2=1+(rand()%(sz-1));
+        if(i1==i2){
+                if(i1==0)
+                        i1++;
+                else
+                        i1--;
+        }
+        
+        int par=cluster.id;
+        int c1_id=cluster_id++;
+        int c2_id=cluster_id++;
+        
+        vector<int>nodes=cluster.nodes;
+        vector<int>nodes1,nodes2;
+        nodes1.push_back(nodes[i1]);
+        nodes2.push_back(nodes[i2]);
+        
+        Cluster cluster1(c1_id,nodes1,par);
+        Cluster cluster2(c2_id,nodes2,par);
+        cluster.child1=cluster1.id;
+        cluster.child2=cluster2.id;
+        
+        for(int i=0;i<nodes.size();i++){
+                if(nodes[i]==nodes[i1] || nodes[i]==nodes[i2])
+                        continue;
+                if(distance_matrix[nodes[i]][nodes[i1]] < distance_matrix[nodes[i]][nodes[i2]])
+                        cluster1.nodes.push_back(nodes[i]);
+                else
+                        cluster2.nodes.push_back(nodes[i]);
+        }
+        
+        for(int i=0;i<iterations;i++){
+                
+                int new_id=1+(rand()%(sz-1));
+                if(new_id==i1 || new_id==i2)
+                        continue;
+                int cost1=cost(nodes,i1,i2,distance_matrix);
+                int cost2=cost(nodes,i1,new_id,distance_matrix);
+                int cost3=cost(nodes,i2,new_id,distance_matrix);
+                
+                if(cost1<=cost2 && cost1<=cost3)
+                        continue;
+                else if(cost2<=cost1 && cost2<=cost3)
+                        i2=new_id;
+                else
+                        i1=new_id;
+                
+                vector<int>nodes1,nodes2;
+                nodes1.push_back(nodes[i1]);
+                nodes2.push_back(nodes[i2]);
+                
+                cluster1.nodes=nodes1;
+                cluster2.nodes=nodes2;
+                
+                for(int j=0;j<nodes.size();j++){
+                        if(nodes[j]==nodes[i1] || nodes[j]==nodes[i2])
+                                continue;
+                        if(distance_matrix[nodes[j]][nodes[i1]] < distance_matrix[nodes[j]][nodes[i2]])
+                                cluster1.nodes.push_back(nodes[j]);
+                        else
+                                cluster2.nodes.push_back(nodes[j]);
+                }
+        }
+        
+        return {cluster1,cluster2};
+}
+
+// Approach 3 Fxn
+vector<vector<int>> approach3(vector<vector<int>> &distance_matrix,int k){     // k = no. of clusters
+        
+        int n=distance_matrix.size();
+        vector<Cluster>cluster;                // currently undivided clusters - leaves of the hierarchial tree
+        vector<Cluster>allClusters;            // all Clusters formed yet
+        vector<int>temp;
+        for(int i=0;i<n;i++)
+                temp.push_back(i);
+        
+        Cluster clus(1,temp);
+        cluster.push_back(clus);
+        
+        for(int i=0;i<k-1;i++){
+                
+                int max_dist=-1;
+                
+                vector<int>tx;
+                Cluster curr_cluster(-1,tx);
+                
+                int count=0;
+                int max_ind=0;
+                for(auto c:cluster){
+                        int dist=inner_distance(c,distance_matrix);
+                        if(max_dist<dist){
+                                max_dist=dist;
+                                curr_cluster=c;
+                                max_ind=count;
+                        }
+                        count+=1;
+                }
+                if(max_dist==0)
+                        break;
+                
+                cluster.erase(cluster.begin()+max_ind);
+                
+                pair<Cluster,Cluster> p=kmedoid(distance_matrix,curr_cluster);
+                Cluster clus1=p.first;
+                Cluster clus2=p.second;
+                
+                allClusters.push_back(curr_cluster);
+                cluster.push_back(clus1);
+                cluster.push_back(clus2);
+                
+        }
+        
+        for(auto c:cluster)
+                allClusters.push_back(c);
+        
+        vector<vector<int>>ans(allClusters.size());
+        sort(allClusters.begin(),allClusters.end());
+        
+        for(auto c:cluster){
+                int id=c.id;
+                vector<int>temp;
+                
+                sort(c.nodes.begin(),c.nodes.end());
+                for(auto node:c.nodes)
+                        temp.push_back(node);
+                if(temp.empty()){
+                        continue;
+                }
+                ans.push_back(temp);
+        }
+        vector<vector<int>>ans2;
+        for(int i=max((int)0,(int)ans.size()-k);i<ans.size();i++)
+                ans2.push_back(ans[i]);
+        return ans2;
+}
+
+
+vector<vector<int>> ap3(
+                        vector<vector<int>> &t,
+                        vector<vector<int>> &d,
+                        vector<int> &edd,    // edd[i] => deadline for ith delivery
+                        vector<int> &vol,    // volume[i] => volume for ith delivery
+                        int n,      // number of delivery points
+                        int wid,    // warehouse idx
+                        int m, // number of vehicles
+                        int cap     // vehicle cap
+)
+{
+        
+        vector<vector<int>> clusters(m);
+        vector<vector<int>> dt = t;
+        for(int i = 0;i < t.size();i++){
+                for(int j = 0;j < t[i].size();j++){
+                        dt[i][j] *= d[i][j];
+                }
+        }
+        clusters = approach3(d,m);
+        
+        vector<vector<int>> best;
+        for(int i = 0;i < clusters.size();i++){
+                
+                if(clusters[i].empty()){
+                        continue;
+                }
+                vector<int> route = christofides(clusters[i],t,d,edd,vol,n,wid,cap);
+                route = GA_Optimise(route, t, d, edd, vol, n, wid, m, cap, max((int)100,(int)(1e6 / (n * n))));
+                route = handle_workandvol(route, vol, t, n, wid, m, cap);
+                best.push_back(route);
+        }
+        
+        return best;
+}
+
+
+// modified savings algo
 vector<vector<int>> savings(
                             vector<vector<int>> &t,
                             vector<vector<int>> &d,
@@ -847,7 +1254,7 @@ vector<vector<int>> savings(
         // allowed = 1e3
         // allowed iterations for k = 10
         while(seq.size() > m){
-//                cout << seq.size();nl; // for debug
+                //                cerr << seq.size();nl; // for debug
                 array<int,5> mx({NINF,NINF,NINF,NINF,NINF});     // {max savings,src,target, src edge id, target edge id}
                 int oldcost = costfunction(totalmissed,totaltime,totaldistance);
                 
@@ -872,10 +1279,7 @@ vector<vector<int>> savings(
                                 if(i == j){
                                         continue;
                                 }
-//                                if(i % 100 == 0){
-//                                        cout << i sp j;nl;
-//
-//                                }
+                                
                                 // checking merge of i into j
                                 vector<int> src = seq[i];
                                 vector<int> target = seq[j];
@@ -924,8 +1328,10 @@ vector<vector<int>> savings(
                                         
                                         int srcmissed = lower_bound(remtimesrc.begin(),remtimesrc.end(), pre_src_overhead) - remtimesrc.begin();
                                         
-                                        int extra_loops = (totv[i] + totv[j] - 1) / cap;
-                                        int average_t = (tott[i] + tott[j] / (seq[j].size() + seq[i].size() + 2)), average_d = (totd[i] + totd[j] / (seq[j].size() + seq[i].size() + 2));
+                                        int average_t = (tott[i] + tott[j] / (seq[j].size() + seq[i].size() + 2)),
+                                        average_d = (totd[i] + totd[j] / (seq[j].size() + seq[i].size() + 2));
+                                        int extra_loops = max((totv[i] + totv[j] - 1) / cap, (tott[i] + tott[j] - 2 * average_t) / workwindow); // estimated
+                                        
                                         int deltat = -tott[i] - t[wid][target[0]] + t[wid][src[k]] + totsrctime + t[src[(k - 1 + src.size()) % src.size()]][target[0]] + 2 * extra_loops * average_t,
                                         deltad = -totd[i] - d[wid][target[0]] + d[wid][src[k]] + totsrcd + d[src[(k - 1 + src.size()) % src.size()]][target[0]] + 2 * extra_loops * average_d,
                                         deltaedd = -missededd[i] - missededd[j] + targetmissed + srcmissed + (extra_loops > 0 ? (seq[i].size() + seq[j].size()) / 3 : 0);
@@ -964,14 +1370,13 @@ vector<vector<int>> savings(
                                                 }
                                                 
                                                 newl1t += t[target[l - 1]][target[l]];
-
+                                                
                                                 
                                                 int pre_src_overhead = newl1t + t[target[l - 1]][src[k]];
                                                 
                                                 int srcmissed = lower_bound(remtimesrc.begin(),remtimesrc.end(), pre_src_overhead) - remtimesrc.begin();
                                                 
-                                                int extra_loops = (totv[i] + totv[j] - 1) / cap;
-                                                int average_t = (tott[i] + tott[j] / (seq[j].size() + seq[i].size() + 2)), average_d = (totd[i] + totd[j] / (seq[j].size() + seq[i].size() + 2));
+                                                
                                                 int deltat = -tott[i] - t[target[l - 1]][target[l]] + t[target[l - 1]][src[k]] + totsrctime + t[src[(k - 1 + src.size()) % src.size()]][target[l]] + 2 * extra_loops * average_t,
                                                 deltad = -totd[i] - d[target[l - 1]][target[l]] + d[target[l - 1]][src[k]] + totsrcd + d[src[(k - 1 + src.size()) % src.size()]][target[l]] + 2 * extra_loops * average_d,
                                                 deltaedd = -missededd[i] - missededd[j] + targetmissed + srcmissed + (extra_loops > 0 ? (seq[i].size() + seq[j].size()) / 3 : 0);
@@ -1050,10 +1455,10 @@ vector<vector<int>> savings(
         tott.clear();
         totv.clear();
         missededd.clear();
-        for(int i = 0;i < seq.size();i++){
-                seq[i] = GA_Optimise(seq[i], t, d, edd, vol, n, wid, m, cap, 10000 / (2 * max(1.0,log(n))));
+        for(auto &route : seq){
+                route = GA_Optimise(route, t, d, edd, vol, n, wid, m, cap, 10000 / (2 * max(1.0,log(n))));
+                route = handle_workandvol(route, vol, t, n, wid, m, cap);
         }
-        seq = handle_capacity(seq,vol,n,wid,m,cap);
         return seq;
 }
 
@@ -1131,15 +1536,14 @@ vector<vector<int>> GAsearch(
                         }
                         for(auto &route : seq){
                                 route = GA_Optimise(route, t, d, edd, vol, n, wid, m, cap, lim);
-                                route = handle_capacity(route, vol, n, wid, m, cap);
-
+                                route = handle_workandvol(route, vol, t, n, wid, m, cap);
                         }
                         
                         int cost = costfunction(seq, t, d, edd, vol, n, wid, m, cap);
                         if(cost < bestcost){
                                 best = seq;
                         }
-
+                        
                 }
                 
         }
@@ -1171,34 +1575,100 @@ vector<vector<int>> solve(vector<vector<int>> &t,
         
         vector<vector<int>> rayfinder_sol = ray_finder(t, d, edd, vol, n, wid, m, cap);
         int rayfinder_cost = costfunction(rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
-        best = min(best,{costfunction(rayfinder_sol, t, d, edd, vol, n, wid, m, cap),1});
+        best = min(best,{rayfinder_cost,1});
         evaluate("Rayfinder", rayfinder_sol, t, d, edd, vol, n, wid, m, cap);
-
-
-
+        
+        vector<vector<int>> ap3_sol;
+        try{
+                ap3_sol = ap3(t, d, edd, vol, n, wid, m, cap);
+                int ap3_cost = costfunction(ap3_sol, t, d, edd, vol, n, wid, m, cap);
+                best = min(best,{ap3_cost,2});
+                evaluate("ap3", ap3_sol, t, d, edd, vol, n, wid, m, cap);
+        }
+        catch(...){
+                cerr <<"Ap3 error\n";
+        }
+        
+        
+        
         vector<vector<int>> GAsearch_sol = GAsearch(t,d,edd,vol,n,wid,m,cap);
         int GAsearch_cost = costfunction(GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
-        best = min(best,{GAsearch_cost,2});
+        best = min(best,{GAsearch_cost,3});
         evaluate("GAsearch", GAsearch_sol, t, d, edd, vol, n, wid, m, cap);
-
+        
         
         
         switch(best.second){
                 case 0 : return savings_sol;
                 case 1 : return rayfinder_sol;
-                case 2 : return GAsearch_sol;
-                default: cout << "No best found in solve\n";
+                case 2 : return ap3_sol;
+                case 3 : return GAsearch_sol;
+                default: cerr << "No best found in solve\n";
+                        cout << -1;
                         return default_sol;
         }
         
 }
 
 
+vector<vector<vector<int>>> process_for_output(vector<vector<int>> seq,
+                                               vector<vector<int>> &t,
+                                               vector<vector<int>> &d,
+                                               vector<int> &edd,    // edd[i] => deadline for ith delivery
+                                               vector<int> &vol,    // volume[i] => volume for ith delivery
+                                               int n,      // number of delivery points
+                                               int wid,    // warehouse idx
+                                               int m, // number of vehicles
+                                               int cap     // vehicle cap
+
+)
+{
+        
+        vector<vector<vector<int>>> routes;
+        for(auto &route : seq){
+                routes.emplace_back();
+                auto &riderroutes = routes.back();
+                if(route.empty()){
+                        continue;
+                }
+                
+                int tott = t[wid][route[0]], days = 0;
+                riderroutes.push_back(vector<int>({route[0]}));
+                for(int i = 1;i < route.size();i++){
+                        tott += t[route[i - 1]][route[i]];
+                        if((tott - 1) / workwindow != days){
+                                days++;
+                                riderroutes.emplace_back();
+                                tott = days * workwindow + t[wid][route[i]];
+                        }
+                        riderroutes.back().push_back(route[i]);
+                }
+                
+                for(auto &route : riderroutes){
+                        while(!route.empty() and route.back() == wid){
+                                route.pop_back();
+                        }
+                }
+        }
+        
+        return routes;
+}
+
+void process_edd(vector<int> &edd){
+        int minedd = *min_element(edd.begin(),edd.end());
+        for(auto &j : edd){
+                j -= minedd;
+                int days = ((j / (24 * 3600 * 1000)) + 25) / 31;
+                j = days + 1;
+                j *= workwindow;
+                //                cout << j;nl;
+        }
+}
 
 int32_t main(){
         ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
-        // do a binary lift on m as well
-        
+        /* freopen("/Users/jenish/Desktop/Inter iit/saved_input.txt","r",stdin); */
+        //        freopen("/Users/jenish/Desktop/Inter iit/out.txt","w",stdout);
         
         int n,  // number of delivery points excluding warehouse. So total (n + 1) locations
         m,      // number of delivery vehicles
@@ -1213,8 +1683,26 @@ int32_t main(){
         read(d,n);
         read(edd,n);
         read(vol,n);
-
+        maxv = *max_element(vol.begin(), vol.end());
+        edd[wid] = INF;
+        vol[wid] =  0;
+        process_edd(edd);
+        
         vector<vector<int>> solution = solve(t, d, edd, vol, n, wid, m, cap);
-        cout << "solution\n";nl;
-        print(solution);
+        evaluate("Solution", solution, t, d, edd, vol, n, wid, m, cap);
+        vector<vector<vector<int>>> routes = process_for_output(solution, t, d, edd, vol, n, wid, m, cap);
+        evaluate("Final Solution", routes, t, d, edd, vol, n, wid, m, cap);
+        
+        
+        // all output on stdout for the calling programmes
+        for(auto &riderroutes : routes){
+                cout << riderroutes.size() <<endl;      // represents number of days
+                for(auto &route : riderroutes){
+                        //                        cout << route.size() <<" "; // not required
+                        for(auto j : route){
+                                cout << j <<" ";
+                        }
+                        cout << endl;
+                }
+        }
 }
