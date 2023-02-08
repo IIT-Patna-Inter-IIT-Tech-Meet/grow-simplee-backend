@@ -62,28 +62,28 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     });
 
     // Form input
-    // const N = packages.length - 1;
-    // const M = riderCount;
-    // const wID = 0;
-    // const cap = VOLUME_CAPACITY_OF_VEHICLE;
-    // const vol = packages.map(({ volume }) => volume);
+    const N = packages.length - 1;
+    const M = riderCount;
+    const wID = 0;
+    const cap = VOLUME_CAPACITY_OF_VEHICLE;
+    const vol = packages.map(({ volume }) => volume);
 
-    // const { distanceMatrix, timeMatrix } = await getDistanceMatrix(
-    //     packages.map(({ latitude, longitude }) => ({ latitude, longitude }))
-    // );
+    const { distanceMatrix, timeMatrix } = await getDistanceMatrix(
+        packages.map(({ latitude, longitude }) => ({ latitude, longitude }))
+    );
 
-    // cachedDistanceMatrix = JSON.parse(JSON.stringify(distanceMatrix)) as Array<Array<number>>;
-    // cachedTimeMatrix = JSON.parse(JSON.stringify(timeMatrix)) as Array<Array<number>>;
+    cachedDistanceMatrix = JSON.parse(JSON.stringify(distanceMatrix)) as Array<Array<number>>;
+    cachedTimeMatrix = JSON.parse(JSON.stringify(timeMatrix)) as Array<Array<number>>;
 
-    // const eddPackages = packages.map(({ edd }) => Number(edd) - Date.now());
+    const eddPackages = packages.map(({ edd }) => Number(edd) - Date.now());
 
-    // const buffer = `${N}\n${M}\n${wID}\n${cap}\n${timeMatrix
-    //     .map((x) => x.join(" "))
-    //     .join("\n")}\n${distanceMatrix.map((x) => x.join(" ")).join("\n")}\n${eddPackages.join(
-    //     " "
-    // )}\n${vol.join(" ")}`;
+    const buffer = `${N}\n${M}\n${wID}\n${cap}\n${timeMatrix
+        .map((x) => x.join(" "))
+        .join("\n")}\n${distanceMatrix.map((x) => x.join(" ")).join("\n")}\n${eddPackages.join(
+        " "
+    )}\n${vol.join(" ")}`;
 
-    // fs.writeFileSync(INPUT_FILE, buffer);
+    fs.writeFileSync(INPUT_FILE, buffer);
 
     // Invoke executable to get routes
     const CMD = invokeExpression(GENERATOR, INPUT_FILE, OUTPUT_FILE);
@@ -108,15 +108,6 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
             } else solution.push([]);
             i += daysScheduled;
         }
-
-        // const solution = solutionBuffer
-        //     .trim()
-        //     .split("\n")
-        //     .map((x) => {
-        //         const y = x.trim().split(" ");
-        //         return y[0] === "" ? [] : y.map((num) => Number(num));
-        //     });
-        // for (let i = solution.length; i < M; ++i) solution.push([]);
 
         // Return the formed Routes;
         return solution.map((riderRoute) => riderRoute.map((pointIdx) => packages[pointIdx]));
