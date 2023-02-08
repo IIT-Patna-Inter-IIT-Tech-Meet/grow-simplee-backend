@@ -175,6 +175,27 @@ const generatePackage = async (
     return { latitude: delivery.customer.latitude, longitude: delivery.customer.longitude };
 };
 
+
+const xlDataSchema = z.array(
+    z.object({
+        address: z.string(),
+        AWB: z.number(),
+        names: z.string(),
+        product_id: z.string(),
+        EDD: z.string(),
+    })
+);
+const cachedDataSchema = z.array(
+    z.object({
+        address: z.string(),
+        AWB: z.number(),
+        names: z.string(),
+        product_id: z.string(),
+        EDD: z.string(),
+        latitude: z.number(),
+        longitude: z.number(),
+    })
+);
 const localTestingDataset = () => {
     const addresses: string[] = [
         "1, 24th Main Rd, 1st Phase, Girinagar, KR Layout, Muneshwara T-Block, JP Nagar, Bangalore",
@@ -197,27 +218,6 @@ const localTestingDataset = () => {
         );
     });
 };
-
-const xlDataSchema = z.array(
-    z.object({
-        address: z.string(),
-        AWB: z.number(),
-        names: z.string(),
-        product_id: z.string(),
-        EDD: z.string(),
-    })
-);
-const cachedDataSchema = z.array(
-    z.object({
-        address: z.string(),
-        AWB: z.number(),
-        names: z.string(),
-        product_id: z.string(),
-        EDD: z.string(),
-        latitude: z.number(),
-        longitude: z.number(),
-    })
-);
 const useCachedDataset = async (cachedDataset: string) => {
     const buffer = fs.readFileSync(cachedDataset).toString();
     const jsonData = cachedDataSchema.safeParse(JSON.parse(buffer));
@@ -314,8 +314,8 @@ const main = async () => {
     await generateRider("test2@test.com", "DL 9CX 7218");
     await generateRider("test3@test.com", "DL 8DY 1276");
 
-    // localTestingDataset();
-    testDataset("bangalore dispatch address.xlsx");
+    localTestingDataset();
+    // testDataset("bangalore dispatch address.xlsx");
     // Add more seedings to the database
 };
 

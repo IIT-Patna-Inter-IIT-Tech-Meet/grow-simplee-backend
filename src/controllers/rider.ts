@@ -278,7 +278,7 @@ export const getPastPackages = async (_req: Request, res: Response) => {
         body: { start, end },
     } = await getPastDeliveriesSchema.parseAsync(req);
 
-    const items: PackageDistAtom[] = [];
+    let items: PackageDistAtom[] = [];
     try {
         const deliveries = await prisma.archivedDelivery.findMany({
             where: {
@@ -301,7 +301,7 @@ export const getPastPackages = async (_req: Request, res: Response) => {
             orderBy: { deliveryTimestamp: "desc" },
         });
 
-        items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
+        items = items.concat(deliveries.map((delivery) => ({ ...delivery, delivery: true })));
 
         const pickups = await prisma.archivedPickup.findMany({
             where: {
@@ -324,7 +324,7 @@ export const getPastPackages = async (_req: Request, res: Response) => {
             orderBy: { pickupTimestamp: "desc" },
         });
 
-        items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
+        items = items.concat(pickups.map((pickup) => ({ ...pickup, delivery: false })));
 
         return res
             .status(200)

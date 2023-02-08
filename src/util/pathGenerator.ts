@@ -6,7 +6,7 @@ import { ItemAtom } from "./types";
 
 const asyncExec = util.promisify(exec);
 
-const VOLUME_CAPACITY_OF_VEHICLE = 3 * 2 * 2 * 100 * 100 * 100; // 3 m * 2 m * 3 m
+const VOLUME_CAPACITY_OF_VEHICLE = 500 * 500 * 1500; // 1.5 m * 0.5 m * 0.5 m
 const WAREHOUSE_ADDRESS = "36, Off MG Road, Church Street, Bangalore";
 
 const invokeExpression = (EXECUTABLE: string, INPUT_FILE: string, OUTPUT_FILE: string) => {
