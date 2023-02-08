@@ -25,7 +25,7 @@ export const addPackage = async (_req: Request, res: Response) => {
     const {
         body: { machineId, SKU, productName, desc, AWB, EDD, customerName, address, phoneno },
     } = req;
-    EDD.setUTCHours(23, 59, 59, 99); // EOD
+    // EDD.setUTCHours(23, 59, 59, 99); // EOD
     // Requirements:
     // - machineId
     // - SKU
@@ -242,14 +242,14 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
         let items: PackageListAtom[] = [];
         if (typeof body.outForDelivery === "boolean" || !body.delivered) {
             items = await prisma.inventoryItem.findMany({
-                skip: body.limit * (body.page - 1),
-                take: body.limit,
-                where: {
-                    AND: [
-                        { shipped: body.outForDelivery },
-                        { delivery: { EDD: { lte: body.eddEnd, gte: body.eddStart } } },
-                    ],
-                },
+                // skip: body.limit * (body.page - 1),
+                // take: body.limit,
+                // where: {
+                //     AND: [
+                //         { shipped: false },
+                //         { delivery: { EDD: { lte: body.eddEnd, gte: body.eddStart } } },
+                //     ],
+                // },
                 select: {
                     shipped: true,
                     id: true,
@@ -289,8 +289,7 @@ export const getPackagesWithFilter = async (_req: Request, res: Response) => {
                 },
                 where: {
                     AND: [
-                        { delivery: { deliveryTimestamp: { lte: body.deliveryBefore } } },
-                        { delivery: { deliveryTimestamp: { gte: body.deliveryAfter } } },
+                        { delivery: { deliveryTimestamp: { lte: body.deliveryAfter, gte: body.deliveryAfter } } },
                     ],
                 },
                 select: {

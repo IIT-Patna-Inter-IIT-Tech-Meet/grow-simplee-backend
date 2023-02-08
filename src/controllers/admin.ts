@@ -325,11 +325,6 @@ export const formRoutes = async (_: Request, res: Response) => {
         startOfNextDay.setDate(startOfNextDay.getDate() + 1);
 
         const packages = await prisma.inventoryItem.findMany({
-            // where: {
-            //     delivery: {
-            //         EDD: { lte: startOfNextDay },
-            //     }, // 1 day
-            // },
             select: {
                 id: true,
                 length: true,
@@ -348,6 +343,7 @@ export const formRoutes = async (_: Request, res: Response) => {
                 },
             },
         });
+        
         const riderCount = await prisma.rider.count({
             where: { onduty: true },
         });

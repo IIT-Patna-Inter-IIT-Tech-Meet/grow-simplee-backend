@@ -314,8 +314,8 @@ const main = async () => {
     await generateRider("test2@test.com", "DL 9CX 7218");
     await generateRider("test3@test.com", "DL 8DY 1276");
 
-    localTestingDataset();
-    // testDataset("bangalore dispatch address.xlsx");
+    // localTestingDataset();
+    testDataset("bangalore dispatch address.xlsx");
     // Add more seedings to the database
 };
 

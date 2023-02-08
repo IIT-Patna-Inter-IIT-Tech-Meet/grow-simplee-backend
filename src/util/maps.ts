@@ -53,6 +53,7 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
     const { data } = await axios.get(URL);
 
     if (data.status !== "OK") {
+        console.log(data);
         console.error(data.error_message);
         throw "[#] ERROR: STATUS returned not OK";
     }
@@ -62,6 +63,8 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
         const timeRow: Array<number> = [];
         elements.forEach((element: any) => {
             if (element.status !== "OK") {
+                console.log(origin, destination)
+                console.dir(data, { depth : null });
                 console.error(`[#] ERROR: Non OK Status received`);
                 throw "Non OK Status received";
             }
@@ -83,7 +86,7 @@ export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
     for (let j = 0; j < points.length; ++j)
         matrices.distanceMatrix.push([]), matrices.timeMatrix.push([]);
 
-    const BATCH_SIZE = 25;
+    const BATCH_SIZE = 10;
     for (let i = 0; i < points.length; i += BATCH_SIZE) {
         const diff = Math.min(BATCH_SIZE, points.length - i);
         const originString = getPointsLatLngString(points, i, i + BATCH_SIZE);
@@ -100,18 +103,18 @@ export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
             );
 
             d.forEach((v, idx) => {
-                dRows[idx] = [...dRows[idx], ...v];
+                dRows[idx] = dRows[idx].concat(v)
             });
             t.forEach((v, idx) => {
-                tRows[idx] = [...tRows[idx], ...v];
+                tRows[idx] = tRows[idx].concat(v)
             });
         }
 
         dRows.forEach((row, idx) => {
-            matrices.distanceMatrix[idx] = matrices.distanceMatrix[idx].concat(row);
+            matrices.distanceMatrix[i + idx] = matrices.distanceMatrix[idx + i].concat(row);
         });
         tRows.forEach((row, idx) => {
-            matrices.timeMatrix[idx] = matrices.timeMatrix[idx].concat(row);
+            matrices.timeMatrix[i + idx] = matrices.timeMatrix[idx + i].concat(row);
         });
     }
     return matrices;

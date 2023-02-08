@@ -70,6 +70,8 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     )}\n${vol.join(" ")}`;
 
     fs.writeFileSync(INPUT_FILE, buffer);
+    
+    throw "Errrooooror"
 
     // Invoke executable to get routes
     const CMD = invokeExpression(GENERATOR, INPUT_FILE, OUTPUT_FILE);
