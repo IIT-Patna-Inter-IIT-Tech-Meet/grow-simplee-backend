@@ -9,6 +9,17 @@ const asyncExec = util.promisify(exec);
 const VOLUME_CAPACITY_OF_VEHICLE = 3 * 2 * 2 * 100 * 100 * 100; // 3 m * 2 m * 3 m
 const WAREHOUSE_ADDRESS = "36, Off MG Road, Church Street, Bangalore";
 
+const invokeExpression = (EXECUTABLE: string, INPUT_FILE: string, OUTPUT_FILE: string) => {
+    switch (process.platform) {
+        case "win32":
+            return `pwsh -c "cat ${INPUT_FILE} | ./${EXECUTABLE} > ${OUTPUT_FILE}"`;
+        case "linux":
+            return `./${EXECUTABLE} < ${INPUT_FILE} > ${OUTPUT_FILE}`;
+        default:
+            throw `Doesn't support ${process.platform} right now.`;
+    }
+};
+
 export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: number) => {
     const GENERATOR_SOURCE_FILE = "routing.cpp";
     const GENERATOR = "routing.exe";
@@ -61,17 +72,7 @@ export const generateRoutes = async (packages: Array<ItemAtom>, riderCount: numb
     fs.writeFileSync(INPUT_FILE, buffer);
 
     // Invoke executable to get routes
-    let CMD = "";
-    switch (process.platform) {
-        case "win32":
-            CMD = `pwsh -c "cat ${INPUT_FILE} | ./${GENERATOR} > ${OUTPUT_FILE}"`;
-            break;
-        case "linux":
-            CMD = `./${GENERATOR} < ${INPUT_FILE} > ${OUTPUT_FILE}`;
-            break;
-        default:
-            throw `Doesn't support ${process.platform} right now.`;
-    }
+    const CMD = invokeExpression(GENERATOR, INPUT_FILE, OUTPUT_FILE);
 
     // Get output
     try {

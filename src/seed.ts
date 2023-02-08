@@ -3,6 +3,9 @@ import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from "./config/config";
 import { geocodeAddress } from "./util/maps";
+import { z } from "zod";
+import reader from "xlsx";
+import fs from "fs";
 
 const prisma = new PrismaClient();
 
@@ -55,7 +58,7 @@ const generateRider = async (email: string, vehicleId: string) => {
             email,
             password: hashedPassword,
             name,
-            onduty: false,
+            onduty: true,
             vehicleId,
         },
     });
@@ -63,24 +66,35 @@ const generateRider = async (email: string, vehicleId: string) => {
     console.log(`Added Rider with email: ${email}`);
 };
 
-const generateProduct = async (): Promise<Product> => {
-    const SKU = `SKU${randomInteger(10000, 99999)}`;
-    const product = await prisma.product.upsert({
-        where: { SKU },
-        update: {},
-        create: {
-            SKU: SKU,
-            name: `prod:${SKU.substring(0, 5)}`,
-            desc: `prod:desc:super-desc-${SKU.substring(0, 5)}`,
-        },
-    });
-    return product;
+const generateProduct = async (sku: string | undefined): Promise<Product> => {
+    const SKU = sku ? sku : `SKU${randomInteger(10000, 99999)}`;
+    try {
+        const product = await prisma.product.upsert({
+            where: { SKU: SKU },
+            update: {},
+            create: {
+                SKU: SKU,
+                name: `prod:${SKU.substring(0, 5)}`,
+                desc: `prod:desc:super-desc-${SKU.substring(0, 5)}`,
+            },
+        });
+        return product;
+    } catch (e) {
+        console.log('ERROR: ', sku, e);
+        throw "Mast error"
+    }
 };
 
-const generateCustomer = async (address: string): Promise<Customer> => {
-    const latLng = await geocodeAddress(address);
+const generateCustomer = async (
+    address: string,
+    custName: string | undefined,
+    latitude: number | undefined,
+    longitude: number | undefined
+): Promise<Customer> => {
+    const latLng =
+        !latitude || !longitude ? await geocodeAddress(address) : { latitude, longitude };
 
-    const name = `cust:name:${randomInteger(10000, 50000)}`;
+    const name = custName ? custName : `cust:name:${randomInteger(10000, 50000)}`;
     const customer = await prisma.customer.upsert({
         where: { name_address: { name, address: address } },
         update: {},
@@ -96,16 +110,35 @@ const generateCustomer = async (address: string): Promise<Customer> => {
     return customer;
 };
 
-const generateDelivery = async (address: string) => {
-    const EDD = new Date(Date.now() + 1000 * 60 * randomInteger(24 * 60, 24 * 60 * 5));
-    const customer = await generateCustomer(address);
+const formDate = (edd: string | undefined) => {
+    if (!edd) {
+        return new Date(Date.now() + 1000 * 60 * randomInteger(24 * 60, 24 * 60 * 5));
+    }
+
+    const d = new Date(edd);
+    d.setUTCHours(20, 0, 0, 0); // 8 o'clock in the evening
+    return d;
+};
+
+const generateDelivery = async (
+    address: string,
+    name: string | undefined,
+    awb: string | undefined,
+    edd: string | undefined,
+    latitude: number | undefined,
+    longitude: number | undefined
+) => {
+    const EDD = formDate(edd);
+    const customer = await generateCustomer(address, name, latitude, longitude);
+
     const delivery = await prisma.delivery.create({
         data: {
             id: uuidv4().substring(0, 20),
-            AWB: `delivery:awb:${customer.id}`,
+            AWB: awb ? awb : `delivery:awb:${customer.id}`,
             EDD,
             customerId: customer.id,
         },
+        include: { customer: true }
     });
 
     console.log(`Delivery record created with AWB: ${delivery.AWB}`);
@@ -113,9 +146,17 @@ const generateDelivery = async (address: string) => {
     return delivery;
 };
 
-const generatePackage = async (address: string) => {
-    const product = await generateProduct();
-    const delivery = await generateDelivery(address);
+const generatePackage = async (
+    address: string,
+    sku: string | undefined,
+    awb: string | undefined,
+    edd: string | undefined,
+    name: string | undefined,
+    latitude: number | undefined,
+    longitude: number | undefined
+) => {
+    const product = await generateProduct(sku);
+    const delivery = await generateDelivery(address, name, awb, edd, latitude, longitude);
 
     const inventoryItem = await prisma.inventoryItem.create({
         data: {
@@ -131,16 +172,10 @@ const generatePackage = async (address: string) => {
     });
 
     console.log(`inventory item added with with id: ${inventoryItem.id}`);
+    return { latitude: delivery.customer.latitude, longitude: delivery.customer.longitude }
 };
 
-const main = async () => {
-    await generateSuperAdmin();
-
-    await generateRider("test@test.com", "DL 9CY 3366");
-    await generateRider("test1@test.com", "DL 8EA 7832");
-    await generateRider("test2@test.com", "DL 9CX 7218");
-    await generateRider("test3@test.com", "DL 8DY 1276");
-
+const localTestingDataset = () => {
     const addresses: string[] = [
         "1, 24th Main Rd, 1st Phase, Girinagar, KR Layout, Muneshwara T-Block, JP Nagar, Bangalore",
         "67, 15th Cross, 6th B Main, JP Nagar, Bangalore",
@@ -151,9 +186,137 @@ const main = async () => {
     ];
 
     addresses.forEach(async (address) => {
-        await generatePackage(address);
+        await generatePackage(
+            address,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined
+        );
     });
+};
 
+const xlDataSchema = z.array(
+    z.object({
+        address: z.string(),
+        AWB: z.number(),
+        names: z.string(),
+        product_id: z.string(),
+        EDD: z.string(),
+    })
+);
+const cachedDataSchema = z.array(
+    z.object({
+        address: z.string(),
+        AWB: z.number(),
+        names: z.string(),
+        product_id: z.string(),
+        EDD: z.string(),
+        latitude: z.number(),
+        longitude: z.number()
+    })
+);
+const useCachedDataset = async (cachedDataset: string) => {
+    const buffer = fs.readFileSync(cachedDataset).toString();
+    const jsonData = cachedDataSchema.safeParse(JSON.parse(buffer));
+
+    if (!jsonData.success) {
+        console.error("ERROR parsing cached dataset");
+        throw "Could not parse cached dataset";
+    }
+
+    const records = jsonData.data;
+
+    const promises: Promise<boolean>[] = [];
+    // address: string,
+    // sku: string | undefined,
+    // awb: string | undefined,
+    // edd: string | undefined,
+    // name: string | undefined,
+    // latitude: number | undefined,
+    // longitude: number | undefined
+    for (const record of records) {
+        await generatePackage(
+            record.address,
+            record.product_id,
+            record.AWB.toString(),
+            record.EDD,
+            record.names,
+            record.latitude,
+            record.longitude
+        )
+    }
+
+    const response = await Promise.all(promises);
+
+
+    if (response.includes(false)) {
+        console.error("BRUHHHH");
+    }
+}
+const testDataset = async (DATASET_FILE: string) => {
+    if (fs.existsSync(`cache.${DATASET_FILE}`)) {
+        await useCachedDataset(`cache.${DATASET_FILE}`);
+        return;
+    }
+
+    const file = reader.readFile(DATASET_FILE);
+    const sheets = file.SheetNames;
+
+    console.assert(sheets.length === 1 && sheets[0] === "Sheet1");
+
+    const jsonData = xlDataSchema.safeParse(
+        reader.utils.sheet_to_json(file.Sheets[file.SheetNames[0]])
+    );
+    if (!jsonData.success) {
+        console.dir(jsonData, { depth: null });
+        throw "Could not parse the file properly :/.";
+    }
+
+    const records = jsonData.data;
+
+    const parsedRecords: z.infer<typeof cachedDataSchema> = [];
+    const promises: Promise<boolean>[] = [];
+    // address: string,
+    // sku: string | undefined,
+    // awb: string | undefined,
+    // edd: string | undefined,
+    // name: string | undefined,
+    // latitude: number | undefined,
+    // longitude: number | undefined
+    for (const record of records) {
+        const latLng = await generatePackage(
+            record.address,
+            record.product_id,
+            record.AWB.toString(),
+            record.EDD,
+            record.names,
+            undefined,
+            undefined
+        );
+        parsedRecords.push({...record, ...latLng})
+    }
+
+    const response = await Promise.all(promises);
+    fs.writeFileSync(`cache.${DATASET_FILE}`, JSON.stringify(parsedRecords));
+
+    if (response.includes(false)) {
+        console.error("BRUHHHH");
+    }
+};
+
+const main = async () => {
+    await generateSuperAdmin();
+
+    await generateRider("test@test.com", "DL 9CY 3366");
+    await generateRider("test1@test.com", "DL 8EA 7832");
+    await generateRider("test2@test.com", "DL 9CX 7218");
+    await generateRider("test3@test.com", "DL 8DY 1276");
+
+    // localTestingDataset();
+    testDataset("bangalore dispatch address.xlsx");
     // Add more seedings to the database
 };
 

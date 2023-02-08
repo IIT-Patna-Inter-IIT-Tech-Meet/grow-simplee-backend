@@ -5,7 +5,7 @@ import { LatLong, Matrix } from "./types";
 
 export const geocodeAddress = async (address: string): Promise<LatLong> => {
     // https://developers.google.com/maps/documentation/geocoding/requests-geocoding
-    const URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURI(
+    const URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         address
     )}&key=${GOOGLE_MAPS_API_KEY}`;
 
@@ -15,6 +15,7 @@ export const geocodeAddress = async (address: string): Promise<LatLong> => {
 
     if (status !== "OK") {
         console.error(data);
+        console.log(address, URL);
         throw "[#] ERROR: STATUS returned not OK";
     }
 
@@ -22,6 +23,7 @@ export const geocodeAddress = async (address: string): Promise<LatLong> => {
 
     if (!result.geometry || !result.geometry.location) {
         console.error(result);
+        console.log(address);
         throw "[#] ERROR: location sub-object not found!";
     }
 
@@ -44,9 +46,9 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
     // https://developers.google.com/maps/documentation/distance-matrix/distance-matrix
     const distanceMatrix: Array<Array<number>> = [];
     const timeMatrix: Array<Array<number>> = [];
-    const URL = `https://maps.googleapis.com/maps/api/distancematrix/json?destinations=${encodeURI(
+    const URL = `https://maps.googleapis.com/maps/api/distancematrix/json?destinations=${encodeURIComponent(
         destination
-    )}&origins=${encodeURI(origin)}&key=${GOOGLE_MAPS_API_KEY}`;
+    )}&origins=${encodeURIComponent(origin)}&key=${GOOGLE_MAPS_API_KEY}`;
 
     const { data } = await axios.get(URL);
 

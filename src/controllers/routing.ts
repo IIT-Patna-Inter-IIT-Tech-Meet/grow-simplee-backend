@@ -1,7 +1,21 @@
 import { Request, Response } from "express";
-import { LatLong, LatLongWithPackage, RiderAuthorizedRequest } from "../util/types";
-import { client as redisClient, routeRepository } from "../util/redis";
+import { RoutePoint, RiderAuthorizedRequest } from "../util/types";
+import { client as redisClient, routeRepository, Routes } from "../util/redis";
 import { z } from "zod";
+
+const fetchPointsFromRoute = (route: Routes) => {
+    // Assumption: all the points are actually carefully jsonified points
+    return route.points.map((pointString) => {
+        const geojson: RoutePoint = JSON.parse(pointString);
+
+        return {
+            latitude: geojson.geometry.coordinates[0],
+            longitude: geojson.geometry.coordinates[1],
+            itemId: geojson.properties.itemId,
+            delivery: geojson.properties.delivery,
+        };
+    });
+};
 
 export const getRiderRouteSchema = z.object({
     query: z.object({
@@ -19,10 +33,7 @@ export const getRiderRoute = async (_req: Request, res: Response) => {
 
         const route = await routeRepository.fetch(routeRepoId);
 
-        // Assumption: all the points are actually carefully jsonified points
-        const points = route.points.map(
-            (pointString): LatLongWithPackage => JSON.parse(pointString)
-        );
+        const points = fetchPointsFromRoute(route);
 
         return res
             .status(200)
@@ -44,8 +55,7 @@ export const getRoute = async (_req: Request, res: Response) => {
 
         const route = await routeRepository.fetch(routeRepoId);
 
-        // Assumption: all the points are actually carefully jsonified points
-        const points = route.points.map((pointString): LatLong => JSON.parse(pointString));
+        const points = fetchPointsFromRoute(route);
 
         return res
             .status(200)
@@ -60,8 +70,7 @@ export const getAllRoutes = async (_: Request, res: Response) => {
     const routesEntities = await routeRepository.search().return.all();
     const routes = routesEntities.map((routeEntity) => {
         return {
-            // Assumption: all the points are actually carefully jsonified points
-            points: routeEntity.points.map((pointString): LatLong => JSON.parse(pointString)),
+            points: fetchPointsFromRoute(routeEntity),
             riderId: routeEntity.riderId,
         };
     });

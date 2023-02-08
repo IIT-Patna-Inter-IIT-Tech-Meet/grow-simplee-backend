@@ -1,6 +1,7 @@
 import { Request } from "express";
 import { Rider, Admin } from "@prisma/client";
 import { Server, Socket } from "socket.io";
+import { Feature, Point } from "geojson";
 
 export type RiderAuthorizedRequest = Request & { riderId: string };
 export type AdminAuthorizedRequest = Request & { adminId: number };
@@ -80,9 +81,11 @@ export type LatLong = {
     longitude: number;
 };
 
-export type LatLongWithPackage = LatLong & {
-    delivery: true;
-    itemId: string;
+export type RoutePoint = Feature<Point> & {
+    properties: {
+        itemId: string;
+        delivery: boolean;
+    };
 };
 
 export type Matrix = {
