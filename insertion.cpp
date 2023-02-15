@@ -359,7 +359,6 @@ void dynamic_insertion(
                         cout << j << " ";
                 }
                 cout << endl;
-                cout << pid;
                 return;
         }
         unordered_set<int> nextdaypoints;
@@ -399,10 +398,10 @@ void dynamic_insertion(
 
 int32_t main(){
         ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
-#ifndef ONLINE_JUDGE
-        freopen("/Users/jenish/Desktop/Inter iit/dynamicinp.txt","r",stdin);
+/* #ifndef ONLINE_JUDGE */
+        /* freopen("/Users/jenish/Desktop/Inter iit/dynamicinp.txt","r",stdin); */
 //        freopen("/Users/jenish/Desktop/Inter iit/out.txt","w",stdout);
-#endif
+/* #endif */
         int n,  // number of delivery points excluding warehouse but including pickup location. So total (n + 1) locations
         m,      // number of delivery vehicles
         wid,    // warehouse id. Try keeping it 0
@@ -434,6 +433,7 @@ int32_t main(){
         
         cin >> ellapsed >> pid;
         edd[pid] = workwindow * 1;
+
 
         dynamic_insertion(seq, t, d, edd, vol, ellapsed, pid, n, wid, m, cap);
 

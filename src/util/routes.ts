@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { routeRepository } from "./redis";
-import { ItemAtom, RoutePoint } from "./types";
+import { ItemAtom, RoutePoint, PackageAtom } from "./types";
 import { client as redisClient } from "./redis";
 
 export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
@@ -53,3 +53,66 @@ export const assignRoutesToRiders = async (routes: ItemAtom[][]) => {
         throw e;
     }
 };
+
+export const updateRiderRoute = async (riderId: string, packages: PackageAtom[]) => {
+    try {
+        const routeRepositoryId = await redisClient.get(`route:${riderId}`);
+
+        if (!routeRepositoryId) {
+            throw "Possible assignment to invalid rider";
+        }
+
+        const route = await routeRepository.fetch(routeRepositoryId);
+
+        route.points = packages.map(({ latitude, longitude, id }) => {
+            const feature: RoutePoint = {
+                type: "Feature",
+                geometry: {
+                    type: "Point",
+                    coordinates: [latitude, longitude],
+                },
+                properties: {
+                    itemId: id,
+                    delivery: true,
+                },
+            };
+            return JSON.stringify(feature);
+        });
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+        throw e;
+    }
+};
+
+export const updateMissedPackages = async (packages: PackageAtom[]) => {
+    const deliverables = packages.filter(x => x.delivery);
+    const pickupables = packages.filter(x => !x.delivery);
+
+    try {
+        deliverables.forEach(async (d) => {
+            if (d.id === "root") return;
+            await prisma.inventoryItem.update({
+                where: { id: d.id },
+                data: {
+                    shipped: false
+                }
+            }).catch((e) => {
+                console.log(e, d)
+            })
+        })
+
+        pickupables.forEach(async (p) => {
+            await prisma.pickup.update({
+                where: { id: p.id },
+                data: {
+                    riderId: null,
+                }
+            }).catch((e) => {
+                console.log(e, p)
+            })
+
+        })
+    } catch (e) {
+        console.error(`[#] ERROR: ${e}`);
+    }
+}

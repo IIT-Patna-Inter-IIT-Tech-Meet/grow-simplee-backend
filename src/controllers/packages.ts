@@ -3,9 +3,13 @@ import { prisma } from "../util/prisma";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
-import { client as redisClient, machineRepository } from "../util/redis";
-import { IORequest, PackageDistAtom, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
+import { client as redisClient, machineRepository, riderRepository, routeRepository } from "../util/redis";
+import { IORequest, PackageAtom, PackageDistAtom, PackageListAtom, RiderAuthorizedRequest } from "../util/types";
 import { geocodeAddress } from "../util/maps";
+import { tweakRoutesForPickup } from "../util/pathGenerator";
+import { packageInfo } from "./admin";
+import { fetchPointsFromRoute } from "./routing";
+import { getRiderRespository } from "../sockets/rider";
 
 export const addPackageSchema = z.object({
     body: z.object({
@@ -117,7 +121,6 @@ export const addPickupSchema = z.object({
         productName: z.string(),
         desc: z.string().optional(),
         AWB: z.string(),
-        EDP: z.string().datetime(),
         customerName: z.string(),
         address: z.string(),
         phoneno: z.string().optional(),
@@ -125,8 +128,11 @@ export const addPickupSchema = z.object({
 });
 export const addPickup = async (req: Request, res: Response) => {
     const {
-        body: { AWB, EDP, SKU, productName, desc, customerName, address, phoneno },
+        body: { AWB, SKU, productName, desc, customerName, address, phoneno },
     } = req as unknown as z.infer<typeof addPickupSchema>;
+
+    const EDP = new Date(Date.now());
+    EDP.setUTCHours(20, 0, 0, 0);
 
     const { io } = req as IORequest;
     try {
@@ -158,17 +164,45 @@ export const addPickup = async (req: Request, res: Response) => {
             },
         });
 
-        // TODOOOO: Call executable to get data of which rider to be assigned for pickup
+        const { riderCount, routePackages } = await packageInfo();
+        const pickupId = uuidv4().substring(0, 20);
+
+        const eod = new Date(Date.now());
+        eod.setUTCHours(20, 0,0 , 0);
+
+        const newPickup: PackageAtom = {
+            id: pickupId,
+            delivery: false,
+            latitude: customer.latitude,
+            longitude: customer.longitude,
+            edd: eod,
+            volume: 0
+        };
+        const riderId = await tweakRoutesForPickup(routePackages, riderCount, newPickup);
 
         const pickup = await prisma.pickup.create({
             data: {
-                id: uuidv4().substring(0, 20),
+                id: pickupId,
                 AWB,
                 EDP,
+                riderId,
                 customerId: customer.id,
                 productId: product.SKU,
             },
         });
+
+        const { rider } = await getRiderRespository(riderId)
+
+        const routeRepoId = await redisClient.get(`route:${riderId}`);
+        if (!routeRepoId) {
+            return res.status(404).json({ success: false, message: "Invalid or inactive rider!" });
+        }
+
+        const route = await routeRepository.fetch(routeRepoId);
+
+        const points = fetchPointsFromRoute(route);
+
+        io.to(rider.socketId).emit('pickup:get', points);
 
         return res.status(200).json({ success: true, message: "Recorded 1 pickup!", pickup });
     } catch (e) {

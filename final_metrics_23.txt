@@ -1,0 +1,10 @@
+-----------------------------------------
+|| Team Number: 23                     ||
+|| Final Metrics for 1000 deliveries   ||
+-----------------------------------------
+
+Total number of orders / Total number of riders   = 
+Avg. distance travelled by each rider             =
+Avg. time Taken to deliver all orders per rider   =
+Median of number of orders given to each rider    =
+Total distance travelled                          =

@@ -96,7 +96,11 @@ export type Matrix = {
 export type ItemAtom = {
     latitude: number;
     longitude: number;
-    id: string; // inventory item
+    id: string; // inventory item | Pickup item
     edd: Date;
     volume: number;
+};
+
+export type PackageAtom = ItemAtom & {
+    delivery: boolean;
 };

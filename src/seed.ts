@@ -115,9 +115,9 @@ const formDate = (edd: string | undefined) => {
         return new Date(Date.now() + 1000 * 60 * randomInteger(24 * 60, 24 * 60 * 5));
     }
 
-    console.log(d);
+    const eddSplit = edd.split("-");
+    const d = new Date(`${eddSplit[1]}-${eddSplit[0]}-${eddSplit[2]}`);
 
-    const d = new Date(edd);
     d.setUTCHours(20, 0, 0, 0); // 8 o'clock in the evening
     return d;
 };

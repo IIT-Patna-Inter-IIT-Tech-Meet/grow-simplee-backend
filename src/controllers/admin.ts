@@ -317,6 +317,68 @@ export const getRidersWithFilters = async (req: Request, res: Response) => {
 //     edd: Date;
 //     volume: number;
 // };
+export const packageInfo = async () => {
+    const deliverables = await prisma.inventoryItem.findMany({
+        select: {
+            id: true,
+            length: true,
+            breadth: true,
+            height: true,
+            delivery: {
+                select: {
+                    customer: {
+                        select: {
+                            latitude: true,
+                            longitude: true,
+                        },
+                    },
+                    EDD: true,
+                },
+            },
+        },
+    });
+
+    const pickupables = await prisma.pickup.findMany({
+        select: {
+            id: true,
+            customer: {
+                select: {
+                    latitude: true,
+                    longitude: true,
+                },
+            },
+            EDP: true,
+        },
+    });
+
+    const riderCount = await prisma.rider.count({
+        where: { onduty: true },
+    });
+    let routePackages = deliverables.map((p) => {
+        return {
+            id: p.id,
+            latitude: p.delivery.customer.latitude,
+            longitude: p.delivery.customer.longitude,
+            edd: p.delivery.EDD,
+            delivery: true,
+            volume: p.length * p.breadth * p.height,
+        };
+    });
+
+    routePackages = routePackages.concat(pickupables.map((p) => {
+        return {
+            id: p.id,
+            latitude: p.customer.latitude,
+            longitude: p.customer.longitude,
+            edd: p.EDP,
+            delivery: false,
+            volume: 0
+        };
+    }))
+
+    return {riderCount, routePackages};
+}
+
 export const formRoutes = async (_: Request, res: Response) => {
     // remove the deliveryTimestamp ones from inventoryItem first
     try {
@@ -324,39 +386,7 @@ export const formRoutes = async (_: Request, res: Response) => {
         startOfNextDay.setUTCHours(0, 0, 0, 0);
         startOfNextDay.setDate(startOfNextDay.getDate() + 1);
 
-        const packages = await prisma.inventoryItem.findMany({
-            select: {
-                id: true,
-                length: true,
-                breadth: true,
-                height: true,
-                delivery: {
-                    select: {
-                        customer: {
-                            select: {
-                                latitude: true,
-                                longitude: true,
-                            },
-                        },
-                        EDD: true,
-                    },
-                },
-            },
-        });
-
-        const riderCount = await prisma.rider.count({
-            where: { onduty: true },
-        });
-        const routePackages = packages.map((p) => {
-            return {
-                id: p.id,
-                latitude: p.delivery.customer.latitude,
-                longitude: p.delivery.customer.longitude,
-                edd: p.delivery.EDD,
-                volume: p.length * p.breadth * p.height,
-            };
-        });
-
+        const { routePackages, riderCount } = await packageInfo();
         const routes = await generateRoutes(routePackages, riderCount);
         await assignRoutesToRiders(routes);
 

@@ -9,7 +9,7 @@ const main = async () => {
 
     for (const x of d) {
         const newEDD = new Date(x.EDD);
-        newEDD.setDate(newEDD.getDate() + 1);
+        newEDD.setDate(newEDD.getDate() + 5);
         newEDD.setMonth(1);
         console.log(newEDD);
         await prisma.delivery.update({

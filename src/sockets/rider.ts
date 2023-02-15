@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { RiderSocket } from "../util/types";
 import { client as redisClient, RiderGeolocation, riderRepository } from "../util/redis";
 
-const getRiderRespository = async (key: string) => {
+export const getRiderRespository = async (key: string) => {
     let riderRepositoryId = await redisClient.get(key);
     if (!riderRepositoryId) {
         const riderEntity = riderRepository.createEntity({
@@ -20,7 +20,7 @@ const getRiderRespository = async (key: string) => {
     return { id: riderRepositoryId, rider: await riderRepository.fetch(riderRepositoryId) };
 };
 
-const saveAndAssertRider = async (
+export const saveAndAssertRider = async (
     riderEntity: RiderGeolocation,
     riderRepoId: string
 ): Promise<void> => {

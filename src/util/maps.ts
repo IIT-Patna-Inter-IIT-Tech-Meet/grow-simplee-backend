@@ -1,5 +1,6 @@
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "../config/config";
+import fs from "fs";
 
 import { LatLong, Matrix } from "./types";
 
@@ -33,7 +34,7 @@ export const geocodeAddress = async (address: string): Promise<LatLong> => {
     };
 };
 
-const getPointsLatLngString = (points: LatLong[], start: number, end: number) => {
+export const getPointsLatLngString = (points: LatLong[], start: number, end: number) => {
     let latLngString = "";
     for (let i = start; i < Math.min(end, points.length); ++i) {
         if (i !== start) latLngString += "|";
@@ -42,7 +43,10 @@ const getPointsLatLngString = (points: LatLong[], start: number, end: number) =>
     return latLngString;
 };
 
-const getBatchDistanceMatrix = async (origin: string, destination: string): Promise<Matrix> => {
+export const getBatchDistanceMatrix = async (
+    origin: string,
+    destination: string
+): Promise<Matrix> => {
     // https://developers.google.com/maps/documentation/distance-matrix/distance-matrix
     const distanceMatrix: Array<Array<number>> = [];
     const timeMatrix: Array<Array<number>> = [];
@@ -55,6 +59,8 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
     if (data.status !== "OK") {
         console.log(data);
         console.error(data.error_message);
+        console.log('origin:', origin);
+        console.log('destination:', destination);
         throw "[#] ERROR: STATUS returned not OK";
     }
 
@@ -81,41 +87,68 @@ const getBatchDistanceMatrix = async (origin: string, destination: string): Prom
     };
 };
 
+const create2DSquare = (length: number, def: number) => {
+    return Array.from(new Array(length)).map(() => Array.from(new Array(length)).map(() => def));
+};
+
+type BatchMatrix = {
+    i: number;
+    j: number;
+    d: Array<Array<number>>;
+    t: Array<Array<number>>;
+};
 export const getDistanceMatrix = async (points: LatLong[]): Promise<Matrix> => {
-    const matrices: Matrix = { distanceMatrix: [], timeMatrix: [] };
-    for (let j = 0; j < points.length; ++j)
-        matrices.distanceMatrix.push([]), matrices.timeMatrix.push([]);
+    const matrices: Matrix = {
+        distanceMatrix: create2DSquare(points.length, 1e18),
+        timeMatrix: create2DSquare(points.length, 1e18),
+    };
 
     const BATCH_SIZE = 10;
+    let promises: Promise<BatchMatrix>[] = [];
+    let responses: BatchMatrix[] = [];
     for (let i = 0; i < points.length; i += BATCH_SIZE) {
-        const diff = Math.min(BATCH_SIZE, points.length - i);
         const originString = getPointsLatLngString(points, i, i + BATCH_SIZE);
 
-        const dRows: Array<Array<number>> = [];
-        const tRows: Array<Array<number>> = [];
-        for (let j = 0; j < diff; ++j) dRows.push([]), tRows.push([]);
+        const inf = 1e18;
 
         for (let j = 0; j < points.length; j += BATCH_SIZE) {
             const destinationString = getPointsLatLngString(points, j, j + BATCH_SIZE);
-            const { distanceMatrix: d, timeMatrix: t } = await getBatchDistanceMatrix(
-                originString,
-                destinationString
+            const len = Math.min(BATCH_SIZE, points.length - j);
+            promises.push(
+                new Promise((resolve, reject) => {
+                    getBatchDistanceMatrix(originString, destinationString)
+                        .then(({ distanceMatrix: d, timeMatrix: t }) => {
+                            console.log("resolved");
+                            resolve({ i, j, d, t });
+                        })
+                        .catch((e) => {
+                            const infArray = create2DSquare(len, inf);
+                            console.error(`[#] ERROR at ${i}, ${j}: ${e}`);
+                            reject({ i, j, d: infArray, t: infArray });
+                        });
+                })
             );
-
-            d.forEach((v, idx) => {
-                dRows[idx] = dRows[idx].concat(v);
-            });
-            t.forEach((v, idx) => {
-                tRows[idx] = tRows[idx].concat(v);
-            });
+            if (promises.length === 1000 / (BATCH_SIZE * BATCH_SIZE)) {
+                responses = [...responses, ...(await Promise.all(promises))];
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                promises = [];
+            }
         }
-
-        dRows.forEach((row, idx) => {
-            matrices.distanceMatrix[i + idx] = matrices.distanceMatrix[idx + i].concat(row);
-        });
-        tRows.forEach((row, idx) => {
-            matrices.timeMatrix[i + idx] = matrices.timeMatrix[idx + i].concat(row);
-        });
     }
+    responses = [...responses, ...(await Promise.all(promises))];
+
+    // Should be a lot faster :/
+
+    for (const batchMatrix of responses) {
+        const li = Math.min(batchMatrix.i + BATCH_SIZE, points.length);
+        for (let i = batchMatrix.i; i < li; ++i) {
+            const lj = Math.min(batchMatrix.j + BATCH_SIZE, points.length);
+            for (let j = batchMatrix.j; j < lj; ++j) {
+                matrices.distanceMatrix[i][j] = batchMatrix.d[i - batchMatrix.i][j - batchMatrix.j];
+                matrices.timeMatrix[i][j] = batchMatrix.t[i - batchMatrix.i][j - batchMatrix.j];
+            }
+        }
+    }
+
     return matrices;
 };
